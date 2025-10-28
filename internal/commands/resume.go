@@ -15,7 +15,8 @@ func Resume() {
 		os.Exit(1)
 	}
 
-	internal.Notify("Yapping started")
+	cfg := internal.LoadConfig()
+	internal.Notify("Yapping started", cfg)
 
 	if err := syscall.Kill(pid, syscall.SIGUSR2); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to resume: %v\n", err)

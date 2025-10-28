@@ -48,7 +48,16 @@ func GetPID() (int, error) {
 	return pid, nil
 }
 
-func Notify(message string) {
-	cmd := exec.Command("notify-send", "-i", "audio-input-microphone", "-u", "critical", "Yap", message)
+func Notify(message string, cfg *Config) {
+	if cfg.Notifications == NotificationDisable {
+		return
+	}
+
+	urgency := "normal"
+	if cfg.Notifications == NotificationUrgent {
+		urgency = "critical"
+	}
+
+	cmd := exec.Command("notify-send", "-i", "audio-input-microphone", "-u", urgency, "Yap", message)
 	cmd.Start()
 }

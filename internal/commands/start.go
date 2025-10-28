@@ -22,6 +22,8 @@ func Start(args []string) {
 		os.Exit(1)
 	}
 
+	cfg := internal.LoadConfig()
+
 	systemDir, err := internal.GetSystemDir()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get system directory: %v\n", err)
@@ -31,14 +33,36 @@ func Start(args []string) {
 	venvPython := filepath.Join(systemDir, "venv", "bin", "python")
 	script := filepath.Join(systemDir, "main.py")
 
-	internal.Notify("Yapping started")
+	model := cfg.Model
+	device := cfg.Device
+	language := cfg.Language
+	fastMode := cfg.FastMode
 
-	pythonArgs := []string{script}
-	if len(args) == 0 {
-		pythonArgs = append(pythonArgs, "--model", "tiny")
-	} else {
-		pythonArgs = append(pythonArgs, args...)
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--model" && i+1 < len(args) {
+			model = args[i+1]
+		} else if arg == "--device" && i+1 < len(args) {
+			device = args[i+1]
+		} else if arg == "--language" && i+1 < len(args) {
+			language = args[i+1]
+		} else if arg == "--fast" {
+			fastMode = true
+		}
 	}
+
+	pythonArgs := []string{script, "--model", model, "--device", device, "--language", language}
+	if fastMode {
+		pythonArgs = append(pythonArgs, "--fast")
+	}
+
+	mode := "accurate"
+	if fastMode {
+		mode = "fast"
+	}
+	fmt.Printf("device: %s | language: %s | mode: %s\n", device, language, mode)
+
+	internal.Notify("Yapping started", cfg)
 
 	cmd := exec.Command(venvPython, pythonArgs...)
 	cmd.Stdout = os.Stdout

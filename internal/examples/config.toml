@@ -1,0 +1,7 @@
+# ~/.config/yappers-of-linux/config.toml
+
+notifications = "true" # true/false/urgent
+model = "tiny" # tiny/base/small/medium/large
+device = "cpu" # cpu/cuda
+language = "en"
+fast_mode = false # true/false

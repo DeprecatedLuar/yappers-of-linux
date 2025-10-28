@@ -10,10 +10,12 @@ import (
 )
 
 func Toggle(args []string) {
+	cfg := internal.LoadConfig()
+
 	pid, err := internal.GetPID()
 	if err != nil {
 		os.Remove(internal.StateFile)
-		internal.Notify("Yapping started")
+		internal.Notify("Yapping started", cfg)
 		Start(args)
 		return
 	}
@@ -22,7 +24,7 @@ func Toggle(args []string) {
 	state := strings.TrimSpace(string(stateData))
 
 	if err == nil && state == "paused" {
-		internal.Notify("Yapping started")
+		internal.Notify("Yapping started", cfg)
 		if err := syscall.Kill(pid, syscall.SIGUSR2); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to resume: %v\n", err)
 			os.Exit(1)

@@ -14,18 +14,69 @@ import (
 //go:embed all:python
 var pythonFiles embed.FS
 
+//go:embed examples/config.toml
+var defaultConfig []byte
+
 const (
 	ConfigDir = ".config/yappers-of-linux"
 	SystemDir = ".system"
 )
+
+func verifyPythonFiles() bool {
+	systemDir, err := GetSystemDir()
+	if err != nil {
+		return false
+	}
+
+	verified := true
+	fs.WalkDir(pythonFiles, "python", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			verified = false
+			return fs.SkipAll
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		relPath, err := filepath.Rel("python", path)
+		if err != nil {
+			verified = false
+			return fs.SkipAll
+		}
+
+		targetPath := filepath.Join(systemDir, relPath)
+
+		if _, err := os.Stat(targetPath); err != nil {
+			verified = false
+			return fs.SkipAll
+		}
+
+		match, err := compareFileContent(path, targetPath)
+		if err != nil || !match {
+			verified = false
+			return fs.SkipAll
+		}
+
+		return nil
+	})
+
+	return verified
+}
 
 func SelfHeal() error {
 	if err := ensureConfigDir(); err != nil {
 		return fmt.Errorf("failed to ensure config dir: %w", err)
 	}
 
-	if err := extractPythonFiles(); err != nil {
-		return fmt.Errorf("failed to extract python files: %w", err)
+	if err := extractConfigFile(); err != nil {
+		return fmt.Errorf("failed to extract config file: %w", err)
+	}
+
+	if !verifyPythonFiles() {
+		if err := extractPythonFiles(); err != nil {
+			return fmt.Errorf("failed to extract python files: %w", err)
+		}
 	}
 
 	if err := ensureVenv(); err != nil {
@@ -62,6 +113,21 @@ func ensureConfigDir() error {
 	}
 
 	return os.MkdirAll(systemDir, 0755)
+}
+
+func extractConfigFile() error {
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+
+	configPath := filepath.Join(configDir, "config.toml")
+
+	if _, err := os.Stat(configPath); err == nil {
+		return nil
+	}
+
+	return os.WriteFile(configPath, defaultConfig, 0644)
 }
 
 func extractPythonFiles() error {
@@ -160,4 +226,30 @@ func hashFile(path string) (string, error) {
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func hashEmbeddedFile(path string) (string, error) {
+	data, err := pythonFiles.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	h := sha256.New()
+	h.Write(data)
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func compareFileContent(embeddedPath, diskPath string) (bool, error) {
+	embeddedHash, err := hashEmbeddedFile(embeddedPath)
+	if err != nil {
+		return false, err
+	}
+
+	diskHash, err := hashFile(diskPath)
+	if err != nil {
+		return false, err
+	}
+
+	return embeddedHash == diskHash, nil
 }
