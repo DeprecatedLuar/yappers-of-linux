@@ -4,7 +4,6 @@ TCP server for state monitoring.
 Provides a simple TCP server that returns current state as JSON.
 Used for integration with status bars, border color systems, etc.
 
-Inspired by Kanata's TCP port implementation.
 """
 
 import socket
