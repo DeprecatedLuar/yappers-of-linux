@@ -56,12 +56,6 @@ func Start(args []string) {
 		pythonArgs = append(pythonArgs, "--fast")
 	}
 
-	mode := "accurate"
-	if fastMode {
-		mode = "fast"
-	}
-	fmt.Printf("device: %s | language: %s | mode: %s\n", device, language, mode)
-
 	internal.Notify("Yapping started", cfg)
 
 	cmd := exec.Command(venvPython, pythonArgs...)

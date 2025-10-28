@@ -54,7 +54,8 @@ class VoiceTyping:
         self.transcriber = Transcriber(model_size, device, language, fast)
         self.output = TextOutput()
 
-        print(f"loaded: {model_size}")
+        mode = "fast" if fast else "accurate"
+        print(f"model: {model_size} | device: {device} | language: {language} | mode: {mode}\n")
 
         # Start TCP server if requested
         self.server = None
