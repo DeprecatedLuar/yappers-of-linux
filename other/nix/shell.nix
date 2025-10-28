@@ -58,8 +58,8 @@ pkgs.mkShell {
     
     echo ""
     echo "Voice typing environment ready!"
-    echo "Run: python realtime-voice-typing.py"
-    echo "Or: python realtime-voice-typing.py --model base --device cuda"
+    echo "Run: python main.py"
+    echo "Or: python main.py --model base --device cuda"
     echo ""
   '';
 }

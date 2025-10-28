@@ -31,6 +31,11 @@ options:
   --device X          Device: cpu, cuda
   --language X        Language code (default: en)
   --tcp [PORT]        Enable TCP server (default port: 12322)
+  --fast              Use fast mode (int8, less accurate but faster)
+
+modes:
+  default             Accurate mode (float32, better quality)
+  --fast              Fast mode (int8, lower quality but faster)
 
 models automatically download on first use
 EOF

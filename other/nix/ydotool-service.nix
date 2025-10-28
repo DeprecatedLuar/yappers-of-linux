@@ -17,7 +17,8 @@
   };
 
   # Add your user to input group for device access
-  users.users.jordan.extraGroups = [ "input" ];
+  # Replace 'YOUR_USERNAME' with your actual username
+  users.users.YOUR_USERNAME.extraGroups = [ "input" ];
   
   # Create udev rule to make /dev/uinput accessible
   services.udev.extraRules = ''
