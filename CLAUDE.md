@@ -10,7 +10,18 @@ Voice typing solution for Linux (Wayland/X11) using OpenAI's Whisper model via f
 
 The project follows a **modular design** with clear separation of concerns:
 
-**Entry Point**: `main.py`
+**Entry Point**: `cmd/main.go`
+- Ultra-minimal Go binary (calls parser)
+- Portable, self-contained executable
+
+**Go CLI Layer**: `internal/`
+- `commands/` - One file per command (start.go, stop.go, pause.go, resume.go, toggle.go, models.go, help.go)
+- `commands/parser.go` - Routes commands to handlers
+- `selfheal.go` - Embeds Python code, auto-extracts to `~/.config/yappers-of-linux/.system/`
+- `utils.go` - Shared helpers (GetPID, Notify, etc.)
+- `constants.go` - Shared constants
+
+**Python Entry Point**: `internal/python/main.py`
 - Argument parsing and validation
 - Instantiates `VoiceTyping` engine
 - Minimal logic, delegates to `internal/` modules
@@ -22,26 +33,32 @@ The project follows a **modular design** with clear separation of concerns:
 - Thread-safe state management via locks
 - Main event loop: processes audio chunks, triggers transcription
 
-**Component Modules**:
-- `internal/capture.py` (`AudioCapture`) - PyAudio stream, circular pre-buffer, recording buffer, WebRTC VAD
-- `internal/transcribe.py` (`Transcriber`) - Whisper model loading, warmup, audio normalization, transcription with configurable compute types (float32/int8)
-- `internal/output.py` (`TextOutput`) - Terminal display, ydotool/xdotool keyboard injection
-- `internal/server.py` (`StateServer`) - Optional TCP server for state monitoring
-- `internal/config.py` - Centralized configuration constants (all tunable parameters)
+**Python Component Modules** (`internal/python/internal/`):
+- `capture.py` (`AudioCapture`) - PyAudio stream, circular pre-buffer, recording buffer, WebRTC VAD
+- `transcribe.py` (`Transcriber`) - Whisper model loading, warmup, audio normalization, transcription with configurable compute types (float32/int8)
+- `output.py` (`TextOutput`) - Terminal display, ydotool/xdotool keyboard injection
+- `server.py` (`StateServer`) - Optional TCP server for state monitoring
+- `config.py` - Centralized configuration constants (all tunable parameters)
 
 **Pipeline Flow**:
 ```
-main.py → VoiceTyping.run()
-           ↓
-    AudioCapture starts thread → reads mic → fills queue
-           ↓
-    Main loop gets chunks → pre-buffer (1.5s circular)
-           ↓
-    VAD detects speech → copy pre-buffer + continue recording
-           ↓
-    0.8s silence → Transcriber.transcribe()
-           ↓
-    TextOutput.type_text() → terminal + ydotool/xdotool
+yap binary (Go)
+    ↓
+SelfHeal() → extract Python to ~/.config/yappers-of-linux/.system/
+    ↓
+Spawn: python ~/.config/yappers-of-linux/.system/main.py
+    ↓
+VoiceTyping.run()
+    ↓
+AudioCapture starts thread → reads mic → fills queue
+    ↓
+Main loop gets chunks → pre-buffer (1.5s circular)
+    ↓
+VAD detects speech → copy pre-buffer + continue recording
+    ↓
+0.8s silence → Transcriber.transcribe()
+    ↓
+TextOutput.type_text() → terminal + ydotool/xdotool
 ```
 
 ## Key Design Patterns
@@ -69,25 +86,29 @@ State transitions managed by `VoiceTyping.state` property setter (thread-safe, u
 
 ## Running the Project
 
-**CLI Wrapper** (recommended): `cmd/yap`
+**Portable Binary** (only method needed):
 ```bash
-yap                          # Show help
-yap start                    # Start with default model (tiny), accurate mode
-yap start --model small      # Use specific model
-yap start --fast             # Fast mode (int8, lower accuracy)
-yap start --model base --fast --tcp  # Combine options
-yap toggle                   # Smart pause/resume/start
-yap pause / resume / stop    # Control running instance
-yap models                   # Show installed models on disk
+./yap                        # Show help
+./yap start                  # Start with default model (tiny), accurate mode
+./yap start --model small    # Use specific model
+./yap start --fast           # Fast mode (int8, lower accuracy)
+./yap start --model base --fast --tcp  # Combine options
+./yap toggle                 # Smart pause/resume/start
+./yap pause / resume / stop  # Control running instance
+./yap models                 # Show installed models on disk
 ```
 
-**Direct Python**:
-```bash
-source venv/bin/activate
-python main.py --model tiny
-python main.py --model small --device cuda --tcp 12322
-python main.py --model base --fast  # Fast mode
-```
+**First Run**:
+- Binary auto-creates `~/.config/yappers-of-linux/.system/`
+- Extracts embedded Python code
+- Creates Python venv
+- Installs dependencies (one-time, ~2 minutes)
+- Subsequent runs are instant
+
+**Self-Healing**:
+- Delete `~/.config/yappers-of-linux/` → binary recreates automatically
+- Works from any location (fully portable)
+- No manual setup required
 
 **Available Options**:
 - `--model`: tiny (default), base, small, medium, large
@@ -145,22 +166,30 @@ X11 users: Falls back to `xdotool` automatically (no special setup).
 
 ## Dependencies
 
-**Python** (requirements.txt):
+**System Requirements**:
+- `python3` - Python 3.10+ (for venv and running Python code)
+- `portaudio19-dev` - Required by PyAudio
+- `ydotool` + `ydotoold` (Wayland) or `xdotool` (X11)
+- `go` 1.21+ (only for building from source)
+
+**Python Dependencies** (auto-installed by binary):
 - `faster-whisper==1.1.1` - CTranslate2-optimized Whisper
 - `numpy>=1.24.0` - Audio array processing
 - `pyaudio==0.2.14` - Microphone access
 - `webrtcvad==2.0.10` - Voice activity detection
 
-**System**:
-- `portaudio19-dev` - Required by PyAudio
-- `ydotool` + `ydotoold` (Wayland) or `xdotool` (X11)
+**Go Dependencies** (for development):
+- Standard library only (no external dependencies)
 
-**Setup**:
+**Building from Source**:
 ```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+go build -o yap cmd/main.go
 ```
+
+**No Python Setup Needed**:
+- Binary handles everything automatically on first run
+- Creates venv and installs dependencies
+- No manual pip install required
 
 ## Model Management
 
@@ -219,23 +248,41 @@ Implementation: `internal/server.py` (`StateServer` class)
 
 ## Project Structure
 
+**Source Code**:
 ```
-main.py                      # Entry point, arg parsing
-cmd/yap                      # CLI wrapper (bash)
-cmd/yap.spec                 # PyInstaller spec (future binary build)
+cmd/
+  main.go                   # Entry point (Go)
 internal/
-  __init__.py               # Exports VoiceTyping class
-  engine.py                 # VoiceTyping orchestrator
-  capture.py                # AudioCapture (PyAudio, VAD, buffers)
-  transcribe.py             # Transcriber (Whisper model)
-  output.py                 # TextOutput (terminal, ydotool/xdotool)
-  server.py                 # StateServer (optional TCP)
-  config.py                 # All configuration constants
+  commands/                 # One file per command
+    parser.go               # Command routing
+    start.go, stop.go, pause.go, resume.go, toggle.go
+    models.go, help.go
+  selfheal.go               # Embedding & extraction logic
+  utils.go                  # Shared helpers
+  constants.go              # Shared constants
+  python/                   # Embedded Python source
+    main.py                 # Python entry point
+    internal/               # Python modules
+      engine.py, capture.py, transcribe.py
+      output.py, server.py, config.py
+    requirements.txt        # Python dependencies
 other/
-  nix/                      # NixOS configurations (archived)
-  _rapha/                   # Old experimental code (archived)
-venv/                        # Python virtual environment
-requirements.txt             # Python dependencies
+  examples/                 # Example configurations
+  nix/                      # NixOS configurations
+venv/                       # Development venv (not embedded)
+go.mod                      # Go dependencies
+```
+
+**Runtime Directory** (auto-created):
+```
+~/.config/yappers-of-linux/
+  .system/                  # System-managed files (auto-extracted)
+    main.py
+    internal/               # Python modules
+    requirements.txt
+    venv/                   # Python virtual environment
+    .deps_installed         # Marker file
+  config.toml               # User configuration (optional, future)
 ```
 
 ## Known Issues & Solutions
