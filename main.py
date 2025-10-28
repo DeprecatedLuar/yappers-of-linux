@@ -109,9 +109,9 @@ class VoiceTyping:
         """Set state and update display"""
         with self._state_lock:
             self._state = new_state
-        # Update terminal display (ephemeral)
+        # Update terminal display (ephemeral) with padding to clear previous content
         if new_state in ["ready", "recording", "processing", "paused"]:
-            print(f"\r{new_state}", end='', flush=True)
+            print(f"\r{new_state:<20}", end='', flush=True)
 
     def get_state_json(self):
         """Get current state as JSON for TCP clients"""
@@ -217,12 +217,12 @@ class VoiceTyping:
             self.type_text(full_text)
         else:
             # Clear the "processing" message
-            print("\r" + " " * 10 + "\r", end='', flush=True)
+            print("\r" + " " * 20 + "\r", end='', flush=True)
             
     def type_text(self, text):
         """Type the text using ydotool or xdotool"""
-        # Print first for immediate feedback
-        print(f"\r{text}\n", flush=True)
+        # Print first for immediate feedback (clear status line first)
+        print(f"\r{' ' * 20}\r{text}\n", flush=True)
 
         try:
             # Try ydotool first
@@ -297,6 +297,8 @@ class VoiceTyping:
         except KeyboardInterrupt:
             pass
         finally:
+            # Clear status line before exit
+            print("\r" + " " * 20 + "\r", end='', flush=True)
             self.cleanup()
             
     def cleanup(self):

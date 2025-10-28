@@ -7,7 +7,7 @@ VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
 SCRIPT="$PROJECT_DIR/main.py"
 
 get_pid() {
-    pgrep -f "python.*main.py" 2>/dev/null
+    pgrep -f "$VENV_PYTHON.*$SCRIPT" 2>/dev/null
 }
 
 notify_started() {
@@ -83,7 +83,8 @@ case "$1" in
         shift  # Remove 'toggle' from args
         PID=$(get_pid)
         if [ -z "$PID" ]; then
-            # Not running - start it with provided args or defaults
+            # Not running - clean up stale state file and start
+            rm -f /tmp/yap-state
             notify_started
             if [ $# -eq 0 ]; then
                 exec "$VENV_PYTHON" "$SCRIPT" --model tiny
