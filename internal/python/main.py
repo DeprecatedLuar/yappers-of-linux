@@ -44,6 +44,15 @@ def main():
         action='store_true',
         help='Use fast mode (int8, faster but less accurate) instead of accurate mode (float32)'
     )
+    parser.add_argument(
+        '--no-typing',
+        action='store_true',
+        help='Disable keyboard typing (only print to terminal)'
+    )
+    parser.add_argument('--gpu', action='store_const', const='gpu', dest='device', help='Use GPU (alias for --device gpu)')
+    parser.add_argument('--cpu', action='store_const', const='cpu', dest='device', help='Use CPU (alias for --device cpu)')
+    parser.add_argument('--cuda', action='store_const', const='gpu', dest='device', help='Use CUDA/GPU (alias for --device gpu)')
+    parser.add_argument('--lang', dest='language', help='Language code (alias for --language)')
 
     args = parser.parse_args()
 
@@ -68,7 +77,8 @@ def main():
         device=args.device,
         language=args.language,
         tcp_port=args.tcp,
-        fast=args.fast
+        fast=args.fast,
+        enable_typing=not args.no_typing
     )
 
     # Handle Ctrl+C gracefully

@@ -14,8 +14,14 @@ from .config import DisplayConfig
 class TextOutput:
     """Manages text output to terminal and active window."""
 
-    def __init__(self):
-        pass
+    def __init__(self, enable_typing=True):
+        """
+        Initialize text output.
+
+        Args:
+            enable_typing: Enable keyboard typing (default: True, set False to only print to terminal)
+        """
+        self.enable_typing = enable_typing
 
     def clear_status_line(self):
         """Clear ephemeral status line in terminal."""
@@ -49,6 +55,10 @@ class TextOutput:
         """
         # Print to terminal first for immediate feedback
         self.print_text(text)
+
+        # Skip keyboard typing if disabled
+        if not self.enable_typing:
+            return
 
         # Type into active window
         try:

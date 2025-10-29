@@ -24,7 +24,7 @@ from .server import StateServer
 class VoiceTyping:
     """Main voice typing engine."""
 
-    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False):
+    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False, enable_typing=True):
         """
         Initialize voice typing engine.
 
@@ -34,12 +34,14 @@ class VoiceTyping:
             language: Language code (en, es, fr, etc.)
             tcp_port: Optional TCP port for state monitoring
             fast: Use fast mode (int8) instead of accurate mode (float32) on CPU
+            enable_typing: Enable keyboard typing (default: True, set False to only print to terminal)
         """
         self.model_size = model_size
         self.device = device
         self.language = language
         self.tcp_port = tcp_port
         self.fast = fast
+        self.enable_typing = enable_typing
 
         # State management
         self._state = "initializing"
@@ -52,7 +54,7 @@ class VoiceTyping:
         # Initialize components
         self.capture = AudioCapture()
         self.transcriber = Transcriber(model_size, device, language, fast)
-        self.output = TextOutput()
+        self.output = TextOutput(enable_typing)
 
         mode = "fast" if fast else "accurate"
         print(f"model: {model_size} | device: {device} | language: {language} | mode: {mode}\n")

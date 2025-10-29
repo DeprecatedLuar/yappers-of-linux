@@ -5,3 +5,4 @@ model = "tiny" # tiny/base/small/medium/large
 device = "cpu" # cpu/cuda
 language = "en"
 fast_mode = false # true/false
+enable_typing = true # true/false - disable to only print to terminal

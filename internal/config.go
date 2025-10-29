@@ -20,6 +20,7 @@ type Config struct {
 	Device        string           `toml:"device"`
 	Language      string           `toml:"language"`
 	FastMode      bool             `toml:"fast_mode"`
+	EnableTyping  bool             `toml:"enable_typing"`
 }
 
 func LoadConfig() *Config {
@@ -31,6 +32,7 @@ func LoadConfig() *Config {
 			Device:        "cpu",
 			Language:      "en",
 			FastMode:      false,
+			EnableTyping:  true,
 		}
 	}
 
@@ -42,6 +44,7 @@ func LoadConfig() *Config {
 		Device:        "cpu",
 		Language:      "en",
 		FastMode:      false,
+		EnableTyping:  true,
 	}
 	if _, err := toml.DecodeFile(configPath, cfg); err != nil {
 		return cfg

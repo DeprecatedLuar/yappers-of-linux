@@ -37,6 +37,7 @@ func Start(args []string) {
 	device := cfg.Device
 	language := cfg.Language
 	fastMode := cfg.FastMode
+	enableTyping := cfg.EnableTyping
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -46,14 +47,25 @@ func Start(args []string) {
 			device = args[i+1]
 		} else if arg == "--language" && i+1 < len(args) {
 			language = args[i+1]
+		} else if arg == "--lang" && i+1 < len(args) {
+			language = args[i+1]
 		} else if arg == "--fast" {
 			fastMode = true
+		} else if arg == "--no-typing" {
+			enableTyping = false
+		} else if arg == "--gpu" || arg == "--cuda" {
+			device = "cuda"
+		} else if arg == "--cpu" {
+			device = "cpu"
 		}
 	}
 
 	pythonArgs := []string{script, "--model", model, "--device", device, "--language", language}
 	if fastMode {
 		pythonArgs = append(pythonArgs, "--fast")
+	}
+	if !enableTyping {
+		pythonArgs = append(pythonArgs, "--no-typing")
 	}
 
 	internal.Notify("Yapping started", cfg)
