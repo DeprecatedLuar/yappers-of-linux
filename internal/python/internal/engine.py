@@ -67,6 +67,9 @@ class VoiceTyping:
 
         # Initial state
         self.state = "ready"
+        # Signal to Go that system is ready (via stderr to not interfere with stdout display)
+        import sys
+        print("SYSTEM_READY", file=sys.stderr, flush=True)
 
     @property
     def state(self):

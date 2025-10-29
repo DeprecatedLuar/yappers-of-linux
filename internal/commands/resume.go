@@ -15,13 +15,13 @@ func Resume() {
 		os.Exit(1)
 	}
 
-	cfg := internal.LoadConfig()
-	internal.Notify("Yapping started", cfg)
-
 	if err := syscall.Kill(pid, syscall.SIGUSR2); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to resume: %v\n", err)
 		os.Exit(1)
 	}
 
 	os.WriteFile(internal.StateFile, []byte("active"), 0644)
+
+	cfg := internal.LoadConfig()
+	internal.Notify("Ready to listen", "start", cfg)
 }

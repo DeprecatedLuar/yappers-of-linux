@@ -21,4 +21,7 @@ func Pause() {
 	}
 
 	os.WriteFile(internal.StateFile, []byte("paused"), 0644)
+
+	cfg := internal.LoadConfig()
+	internal.Notify("Yapping paused", "pause", cfg)
 }

@@ -51,13 +51,15 @@ func GetPID() (int, error) {
 	return pid, nil
 }
 
-func Notify(message string, cfg *Config) {
-	if cfg.Notifications == NotificationDisable {
+func Notify(message string, event string, cfg *Config) {
+	notifCfg := ParseNotifications(cfg.Notifications)
+
+	if !notifCfg.ShouldNotify(event) {
 		return
 	}
 
 	urgency := "normal"
-	if cfg.Notifications == NotificationUrgent {
+	if notifCfg.Urgent {
 		urgency = "critical"
 	}
 

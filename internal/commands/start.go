@@ -1,11 +1,13 @@
 package commands
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"yappers-of-linux/internal"
 )
@@ -75,12 +77,16 @@ func Start(args []string) {
 		pythonArgs = append(pythonArgs, "--no-typing")
 	}
 
-	internal.Notify("Yapping started", cfg)
-
 	cmd := exec.Command(venvPython, pythonArgs...)
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
+
+	// Capture stderr to watch for state markers
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create stderr pipe: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Set LD_LIBRARY_PATH for CUDA libraries (cuBLAS, cuDNN)
 	cmd.Env = os.Environ()
@@ -102,6 +108,22 @@ func Start(args []string) {
 	if err := os.WriteFile(internal.PIDFile, pidData, 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: failed to write pid file: %v\n", err)
 	}
+
+	// Read stderr line by line, watching for state markers
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			// Watch for state markers
+			if strings.Contains(line, "SYSTEM_READY") {
+				internal.Notify("Ready to listen", "start", cfg)
+			} else {
+				// Print other stderr output
+				fmt.Fprintln(os.Stderr, line)
+			}
+		}
+	}()
 
 	cmd.Wait()
 	os.Remove(internal.PIDFile)

@@ -7,7 +7,7 @@ import (
 
 func Parse(args []string) {
 	if len(args) < 2 {
-		Help()
+		Help([]string{})
 		return
 	}
 
@@ -15,7 +15,7 @@ func Parse(args []string) {
 
 	switch command {
 	case "help", "--help", "-h":
-		Help()
+		Help(args[2:])
 	case "models":
 		Models()
 	case "config":

@@ -1,8 +1,9 @@
 # ~/.config/yappers-of-linux/config.toml
 
-notifications = "true" # true/false/urgent
+# Add "urgent" for persistent notifications (ignores DND)
+notifications = "start,pause,stop" # Examples: "start,pause,stop" | "urgent" | "false"
 model = "tiny" # tiny/base/small/medium/large
 device = "cpu" # cpu/cuda
 language = "en"
-fast_mode = false # true/false
-enable_typing = true # true/false - disable to only print to terminal
+fast_mode = false
+enable_typing = true
