@@ -22,7 +22,7 @@ class Transcriber:
 
         Args:
             model_size: Model size (tiny, base, small, medium, large)
-            device: Compute device (cpu, cuda)
+            device: Compute device (cpu, gpu)
             language: Language code (en, es, fr, etc.)
             fast: Use fast mode (int8) instead of accurate mode (float32) on CPU
         """
@@ -31,12 +31,15 @@ class Transcriber:
         self.language = language
         self.fast = fast
 
+        # Map 'gpu' to 'cuda' for faster-whisper backend
+        whisper_device = "cuda" if device == "gpu" else "cpu"
+
         if device == "cpu":
             compute_type = TranscriptionConfig.COMPUTE_TYPE_CPU if fast else "float32"
         else:
             compute_type = TranscriptionConfig.COMPUTE_TYPE_GPU
 
-        self.model = WhisperModel(model_size, device=device, compute_type=compute_type)
+        self.model = WhisperModel(model_size, device=whisper_device, compute_type=compute_type)
 
         # Warm up model to avoid first-run delay
         self._warmup()

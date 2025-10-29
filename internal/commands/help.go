@@ -15,7 +15,7 @@ commands:
 
 options:
   --model X           Model size: tiny, base, small, medium, large
-  --device X          Device: cpu, cuda
+  --device X          Device: cpu, gpu (or cuda)
   --language X        Language code (default: en)
   --tcp [PORT]        Enable TCP server (default port: 12322)
   --fast              Use fast mode (int8, less accurate but faster)

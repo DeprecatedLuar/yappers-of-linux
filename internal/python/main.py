@@ -23,8 +23,8 @@ def main():
     parser.add_argument(
         '--device',
         default='cpu',
-        choices=['cpu', 'cuda'],
-        help='Compute device (default: cpu)'
+        choices=['cpu', 'gpu', 'cuda'],
+        help='Compute device: cpu, gpu, or cuda (gpu and cuda are aliases, default: cpu)'
     )
     parser.add_argument(
         '--language',
@@ -47,12 +47,16 @@ def main():
 
     args = parser.parse_args()
 
-    # Validate CUDA availability
+    # Normalize cuda -> gpu (they're aliases)
     if args.device == 'cuda':
+        args.device = 'gpu'
+
+    # Validate GPU availability
+    if args.device == 'gpu':
         try:
             import torch
             if not torch.cuda.is_available():
-                print("CUDA not available, using CPU")
+                print("GPU not available, using CPU")
                 args.device = 'cpu'
         except ImportError:
             print("PyTorch not installed, using CPU")

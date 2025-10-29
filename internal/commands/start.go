@@ -63,6 +63,17 @@ func Start(args []string) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
+	// Set LD_LIBRARY_PATH for CUDA libraries (cuBLAS, cuDNN)
+	cmd.Env = os.Environ()
+	sitePackages := filepath.Join(systemDir, "venv", "lib", "python3.10", "site-packages")
+	cudaLibPaths := filepath.Join(sitePackages, "nvidia", "cublas", "lib") + ":" +
+		filepath.Join(sitePackages, "nvidia", "cudnn", "lib")
+	currentLdPath := os.Getenv("LD_LIBRARY_PATH")
+	if currentLdPath != "" {
+		cudaLibPaths = cudaLibPaths + ":" + currentLdPath
+	}
+	cmd.Env = append(cmd.Env, "LD_LIBRARY_PATH="+cudaLibPaths)
+
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to start: %v\n", err)
 		os.Exit(1)

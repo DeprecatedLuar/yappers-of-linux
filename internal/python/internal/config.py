@@ -19,7 +19,7 @@ class AudioConfig:
 class VADConfig:
     """Voice Activity Detection parameters."""
 
-    AGGRESSIVENESS = 2
+    AGGRESSIVENESS = 3
 
 
 class TranscriptionConfig:
