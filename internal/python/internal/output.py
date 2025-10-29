@@ -7,6 +7,7 @@ Handles:
 - Clearing ephemeral status lines
 """
 
+import os
 import subprocess
 from .config import DisplayConfig
 
@@ -22,6 +23,11 @@ class TextOutput:
             enable_typing: Enable keyboard typing (default: True, set False to only print to terminal)
         """
         self.enable_typing = enable_typing
+
+        # Detect session type (Wayland vs X11)
+        self.session_type = os.environ.get('XDG_SESSION_TYPE', '').lower()
+        self.is_wayland = self.session_type == 'wayland'
+        self.is_x11 = self.session_type == 'x11'
 
     def clear_status_line(self):
         """Clear ephemeral status line in terminal."""
@@ -60,17 +66,53 @@ class TextOutput:
         if not self.enable_typing:
             return
 
-        # Type into active window
+        # Type into active window based on session type
+        if self.is_wayland:
+            self._type_wayland(text)
+        elif self.is_x11:
+            self._type_x11(text)
+        else:
+            # Unknown session type, try both
+            self._type_with_fallback(text)
+
+    def _type_wayland(self, text):
+        """Type text on Wayland using ydotool."""
         try:
-            # Try ydotool first (Wayland-compatible)
             subprocess.run(
-                ['ydotool', '--socket-path', '/run/ydotoold/socket', 'type', text + ' '],
+                ['ydotool', 'type', text + ' '],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+        except FileNotFoundError:
+            print(f"\rerror: ydotool not installed (required for Wayland)")
+        except subprocess.CalledProcessError:
+            print(f"\rerror: ydotool failed (is ydotoold running? try: sudo ydotoold &)")
+
+    def _type_x11(self, text):
+        """Type text on X11 using xdotool."""
+        try:
+            subprocess.run(
+                ['xdotool', 'type', '--delay', '10', text + ' '],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+        except FileNotFoundError:
+            print(f"\rerror: xdotool not installed (required for X11)")
+        except subprocess.CalledProcessError:
+            print(f"\rerror: xdotool failed")
+
+    def _type_with_fallback(self, text):
+        """Try ydotool first, fallback to xdotool (for unknown session types)."""
+        try:
+            subprocess.run(
+                ['ydotool', 'type', text + ' '],
                 capture_output=True,
                 text=True,
                 check=True
             )
         except (subprocess.CalledProcessError, FileNotFoundError):
-            # Fallback to xdotool (X11 only)
             try:
                 subprocess.run(
                     ['xdotool', 'type', '--delay', '10', text + ' '],
@@ -78,4 +120,4 @@ class TextOutput:
                     check=True
                 )
             except (subprocess.CalledProcessError, FileNotFoundError):
-                print(f"\rerror: failed to type")
+                print(f"\rerror: failed to type (session: {self.session_type})")
