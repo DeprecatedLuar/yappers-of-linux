@@ -40,7 +40,8 @@ class TextOutput:
         Args:
             status: Status text to display (e.g., "ready", "recording", "processing")
         """
-        print(f"\r{status:<{DisplayConfig.STATUS_LINE_WIDTH}}", end='', flush=True)
+        # Clear line first, then print status (prevents cursor glitches)
+        print(f"\r{' ' * DisplayConfig.STATUS_LINE_WIDTH}\r{status}", end='', flush=True)
 
     def print_text(self, text):
         """
