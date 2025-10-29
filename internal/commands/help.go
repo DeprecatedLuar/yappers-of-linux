@@ -12,6 +12,7 @@ commands:
   resume              Resume listening
   stop (kill)         Stop voice typing
   models              Show installed models
+  config              Open config file in $EDITOR
 
 options:
   --model X           Model size: tiny, base, small, medium, large

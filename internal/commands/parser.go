@@ -18,6 +18,8 @@ func Parse(args []string) {
 		Help()
 	case "models":
 		Models()
+	case "config":
+		Config()
 	case "start":
 		Start(args[2:])
 	case "toggle":

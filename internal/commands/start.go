@@ -60,6 +60,13 @@ func Start(args []string) {
 		}
 	}
 
+	if enableTyping {
+		if err := internal.EnsureYdotoold(); err != nil {
+			fmt.Fprintf(os.Stderr, "ydotoold setup failed: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	pythonArgs := []string{script, "--model", model, "--device", device, "--language", language}
 	if fastMode {
 		pythonArgs = append(pythonArgs, "--fast")
