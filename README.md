@@ -37,7 +37,7 @@ Uses faster-whisper (optimized Whisper implementation) with a circular pre-recor
 - **Portable binary** - Literally one file, zero setup, runs anywhere (well, at least Linux)
 - **Performance modes** - Faster or more accurate modes based on your hardware
 - **One toggle** - `yap toggle` pauses, resumes, or starts (control via cli)
-- **State server** - TCP server for status bar/widget integrations
+- **TCP server** - Automate data to your bar/overlays/satelites/dog
 - **Actually private** - Literally Whisper (Wow!)
 
 ---
