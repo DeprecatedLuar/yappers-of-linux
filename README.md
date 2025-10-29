@@ -38,6 +38,7 @@ Uses faster-whisper (optimized Whisper implementation) with a circular pre-recor
 - **Performance modes** - Faster or more accurate modes based on your hardware
 - **One toggle** - `yap toggle` pauses, resumes, or starts (control via cli)
 - **TCP server** - Intercept and pipe status changes to your bar/overlays/satelites/dog
+- **Output file** - Pipe transcriptions to other scripts for automation
 - **Actually private** - Literally Whisper (Wow!)
 
 ---
@@ -137,6 +138,8 @@ model = "tiny"                   # Which model to use
 device = "cpu"                   # cpu or cuda
 language = "en"                  # What language you're speaking
 fast_mode = false                # Trade accuracy for speed
+enable_typing = true             # Type into active window
+output_file = false              # Write to output.txt for piping/automation
 ```
 
 Run `yap help config` if you want all the details.
@@ -173,6 +176,32 @@ nc 127.0.0.1 12322     # Test it out
 ```
 
 Spits out JSON with the current state. Inspired by [Kanata's TCP port](https://github.com/jtroo/kanata).
+
+</details>
+
+<details>
+<summary>Output File (for automation)</summary>
+
+<br>
+
+Enable `output_file = true` in config to write transcriptions to `~/.config/yappers-of-linux/output.txt`.
+
+**How it works**:
+- File is ephemeral - deleted on each `yap start` (fresh session)
+- Each transcription appends a new line
+- Silent operation (no terminal output)
+
+**Use cases**:
+```bash
+# Pipe to another script
+tail -f ~/.config/yappers-of-linux/output.txt | your-script.sh
+
+# Process with jq/awk/whatever
+cat ~/.config/yappers-of-linux/output.txt | process-commands
+
+# Voice-controlled automation
+while read line; do handle_command "$line"; done < output.txt
+```
 
 </details>
 
