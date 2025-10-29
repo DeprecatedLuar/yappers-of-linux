@@ -1,345 +1,185 @@
-# Voice Typing for Linux - Technical Reference
+<H1 align="center">
+  Yappers of Linux
+</H1>
 
-Voice typing for Linux (Wayland/X11) using OpenAI Whisper via faster-whisper. Distributed as a **portable Go binary** with embedded Python engine and self-healing dependency management. Pre-recording circular buffer ensures no speech loss at utterance start.
+<p align="center">
+  <img src="other/assets/yappers-of-linux-banner.png"/>
+</p>
 
-## Architecture
+<p align="center">Voice typing for Linux that actually works</p>
 
-**Hybrid Design**: Go CLI wrapper + embedded Python engine
+<p align="center">
+  <a href="https://github.com/DeprecatedLuar/yappers-of-linux/stargazers">
+    <img src="https://img.shields.io/github/stars/DeprecatedLuar/yappers-of-linux?style=for-the-badge&logo=github&color=1f6feb&logoColor=white&labelColor=black"/>
+  </a>
+  <a href="https://github.com/DeprecatedLuar/yappers-of-linux/releases">
+    <img src="https://img.shields.io/github/v/release/DeprecatedLuar/yappers-of-linux?style=for-the-badge&logo=go&color=00ADD8&logoColor=white&labelColor=black"/>
+  </a>
+  <a href="https://github.com/DeprecatedLuar/yappers-of-linux/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/DeprecatedLuar/yappers-of-linux?style=for-the-badge&color=green&labelColor=black"/>
+  </a>
+</p>
 
-**Entry Point**: `cmd/main.go` → Go binary (`yap`)
-- Minimal Go wrapper (command routing only)
-- Embeds entire Python codebase and config in binary
-- Self-healing system: auto-extracts to `~/.config/yappers-of-linux/`
-- Hash-based dependency management (SHA256 of requirements.txt)
-- Zero manual setup required
+---
 
-**Python Engine**: Modular architecture in `internal/python/`
-- `main.py` - Entry point (argument parsing, instantiation)
-- `internal/engine.py` - Core `VoiceTyping` class (orchestration, state machine)
-- `internal/capture.py` - Audio capture, circular buffer, WebRTC VAD
-- `internal/transcribe.py` - Whisper model loading, transcription
-- `internal/output.py` - Terminal display, keyboard injection
-- `internal/server.py` - Optional TCP server for state monitoring
-- `internal/config.py` - Centralized configuration constants
+## Somehow I had to build this
 
-**Audio Pipeline**:
-```
-yap binary (Go)
-    ↓
-SelfHeal() → extract Python to ~/.config/yappers-of-linux/.system/
-    ↓
-Spawn: python ~/.config/yappers-of-linux/.system/main.py
-    ↓
-VoiceTyping.run()
-    ↓
-AudioCapture thread → mic (16kHz mono) → queue → pre-buffer (1.5s circular)
-    ↓ (VAD detects speech)
-Pre-buffer + new chunks → recording buffer
-    ↓ (0.8s silence)
-Transcriber.transcribe() → faster-whisper
-    ↓
-TextOutput.type_text() → terminal + ydotool/xdotool
-```
+Voice typing on Linux either doesn't work or was made in the past century. How android beats Linux on that for the past 10 years? I can't let that slide.
 
-**State Machine** (`VoiceTyping.state` property):
-1. `initializing` - Loading Whisper model
-2. `ready` - Pre-buffer filling, waiting for VAD trigger
-3. `recording` - VAD detected speech, capturing audio
-4. `processing` - Transcribing with Whisper
-5. `paused` - SIGUSR1 received, processing skipped, model stays loaded
+---
 
-Thread-safe state management via locks (`_state_lock`, `_running_lock`, `_paused_lock`)
+## How it works
 
-## Critical Parameters
+Uses faster-whisper (optimized Whisper implementation) with a circular pre-recording buffer and WebRTC VAD for speech detection. The whole engine is embedded in a single Go binary that self-extracts and manages its own Python environment using hashed files to check dependencies and update them as needed.
 
-All tunable parameters centralized in `internal/python/internal/config.py`:
+## The cool features you've never seen before
 
-**AudioConfig** (most important for tuning):
-```python
-RATE = 16000                      # Whisper requirement
-CHUNK_DURATION_MS = 30            # WebRTC VAD requirement (30ms frames)
-CHUNK_SIZE = 480                  # 16000 * 30 / 1000
-PRE_BUFFER_DURATION_SEC = 1.5     # Captures speech beginning
-SILENCE_DURATION_SEC = 0.8        # Silence before transcription trigger
-MIN_AUDIO_DURATION_SEC = 0.7      # Discard recordings shorter than this
+- **Portable binary** - Literally one file, zero setup, runs anywhere (well, at least Linux)
+- **Performance modes** - Faster or more accurate modes based on your hardware
+- **One toggle** - `yap toggle` pauses, resumes, or starts (control via cli)
+- **State server** - TCP server for status bar/widget integrations
+- **Actually private** - Literally Whisper (Wow!)
+
+---
+
+## Installation
+
+```bash
+curl -sSL https://raw.githubusercontent.com/DeprecatedLuar/yappers-of-linux/main/install.sh | bash
 ```
 
-**VADConfig**:
-```python
-AGGRESSIVENESS = 2                # WebRTC VAD mode (0=least, 3=most aggressive)
+<details>
+<summary>Other Install Methods</summary>
+
+<br>
+
+**Manual Install**
+```bash
+# Download binary from releases
+wget https://github.com/DeprecatedLuar/yappers-of-linux/releases/latest/download/yap
+chmod +x yap
+sudo mv yap /usr/local/bin/
+yap start  # Auto-installs everything
 ```
 
-**TranscriptionConfig**:
-```python
-BEAM_SIZE = 5                     # Accuracy vs speed tradeoff
-TEMPERATURE = 0.0                 # Deterministic output
-VAD_MIN_SILENCE_MS = 400          # Additional VAD in Whisper
-COMPUTE_TYPE_CPU = "int8"         # Fast mode (float32 in accurate mode)
-COMPUTE_TYPE_GPU = "float16"      # GPU compute type
+**Build From Source**
+```bash
+git clone https://github.com/DeprecatedLuar/yappers-of-linux.git
+cd yappers-of-linux
+go build -o yap cmd/main.go
+./yap start
 ```
 
-**Model warmup** (`internal/python/internal/transcribe.py`):
-- Dummy 1s audio transcribed on init to prevent first-run delay
-- Audio normalization: Peak normalization applied before transcription
+**System Requirements**:
+- `python3` (3.10+)
+- `portaudio19-dev` (for mic access)
+- `ydotool` + `ydotoold` (Wayland) OR `xdotool` (X11)
+
+</details>
+
+First run takes ~2 minutes to download and set up everything. After that, it's instant.
+
+---
 
 ## Usage
 
-**Binary**: `yap` (portable Go executable)
-
-**Commands**:
 ```bash
-yap                        # Show help
-yap start                  # Start with default model (tiny), accurate mode
-yap start --model small    # Use specific model
-yap start --fast           # Fast mode (int8, lower accuracy)
-yap start --no-typing      # Only print to terminal, no keyboard injection
-yap start --tcp            # Enable TCP server on port 12322
-yap start --tcp 9999       # Custom TCP port
-yap toggle                 # Smart pause/resume/start
-yap pause                  # SIGUSR1 → paused=True, processing skipped
-yap resume                 # SIGUSR2 → paused=False, clear buffers
-yap stop (or kill)         # SIGTERM → cleanup and exit
-yap models                 # Show installed models on disk
+yap start                     # Start listening
+yap start --model small       # Use better model
+yap start --fast              # Faster but less accurate
+yap toggle                    # Pause/resume/start
+yap stop                      # Stop
 ```
 
-**Available options**:
-- `--model X`: tiny (default), base, small, medium, large
-- `--device X`: cpu (default), cuda
-- `--language X` / `--lang X`: en (default), es, fr, etc.
-- `--tcp [PORT]`: Enable TCP server (default: 12322)
-- `--fast`: Use int8 compute type (faster, less accurate)
-- `--no-typing`: Disable keyboard typing (terminal only)
-- `--cpu` / `--gpu` / `--cuda`: Device shortcuts
+<details>
+<summary>Available Models</summary>
 
-**Performance modes** (CPU only):
-- **Accurate (default)**: float32 compute type - better transcription quality
-- **Fast (`--fast` flag)**: int8 compute type - faster but less accurate
+<br>
 
-## Dependencies
+Models auto-download on first use:
 
-**System Requirements** (for binary to work):
-- `python3` (3.10+) - For venv and running embedded Python code
-- `portaudio19-dev` - Required by PyAudio
-- `ydotool` + `ydotoold` (Wayland) or `xdotool` (X11) - Keyboard injection
-- `go` 1.21+ (only needed for building from source)
+| Model  | Size   | Speed      | Accuracy |
+|--------|--------|------------|----------|
+| tiny   | ~75MB  | Fastest    | Basic    |
+| base   | ~150MB | Fast       | Good     |
+| small  | ~500MB | Balanced   | Better   |
+| medium | ~1.5GB | Slow       | Great    |
+| large  | ~3GB   | Slowest    | Best     |
 
-**Python Dependencies** (auto-installed by binary):
-```
-faster-whisper==1.1.1    # CTranslate2-optimized Whisper
-numpy>=1.24.0            # Audio array processing
-pyaudio==0.2.14          # Microphone access
-webrtcvad==2.0.10        # Voice activity detection
-requests>=2.31.0         # Required by faster-whisper
-```
+</details>
 
-**Self-Healing System**:
-- Binary embeds Python code and default config.toml
-- First run: Auto-extracts to `~/.config/yappers-of-linux/.system/`
-- Creates Python venv automatically
-- Installs dependencies (~2 minutes, one-time)
-- Hash-based dependency management:
-  - Computes SHA256 of `requirements.txt`
-  - Stores hash in `.deps_installed` marker file
-  - Subsequent runs: Skip pip install if hash matches
-  - Binary updates: Auto-detects changed requirements, reinstalls automatically
-- Config extraction: Only if missing (never overwrites user config)
-- Python extraction: Always overwrites (system-managed files)
-- No manual setup required
+<details>
+<summary>More stuff you can do</summary>
 
-**First Run**:
+<br>
+
 ```bash
-./yap start              # Auto-creates venv, installs deps, starts
+yap start --device cuda       # Use GPU instead
+yap start --language es       # Spanish (or any other language)
+yap start --tcp               # Enable state server on port 12322
+yap start --no-typing         # Just prints to terminal, doesn't type
+yap models                    # See what models you have
+yap config                    # Open config in your editor
 ```
 
-**Building from Source**:
-```bash
-go build -o yap cmd/main.go
-```
+</details>
 
-**Wayland Requirement**:
-`ydotoold` daemon MUST be running before voice typing works:
-- Check: `ps aux | grep ydotoold` or `systemctl status ydotoold`
-- Start: `ydotoold &`
-- Socket: `/run/ydotoold/socket` (hardcoded in `internal/python/internal/output.py`)
-- NixOS: Configuration in `other/nix/ydotool-service.nix`
-- X11 users: Falls back to `xdotool` automatically
+<details>
+<summary>Configuration</summary>
 
-## Configuration
+<br>
 
-**Location**: `~/.config/yappers-of-linux/config.toml` (auto-created on first run)
+Config file lives at `~/.config/yappers-of-linux/config.toml` and gets created on first run.
 
-**Format**: TOML
 ```toml
-notifications = "urgent"     # true/false/urgent
-model = "tiny"               # tiny/base/small/medium/large
-device = "cpu"               # cpu/cuda
-language = "en"              # Language code
-fast_mode = false            # true/false
-enable_typing = true         # true/false - disable for terminal-only
+notifications = "start,urgent"   # When to notify you
+model = "tiny"                   # Which model to use
+device = "cpu"                   # cpu or cuda
+language = "en"                  # What language you're speaking
+fast_mode = false                # Trade accuracy for speed
 ```
 
-**Notification Modes**:
-- `"urgent"` (default) - Critical urgency notifications via notify-send
-- `"true"` - Normal urgency notifications
-- `"false"` - Disable all notifications
+Run `yap help config` if you want all the details.
 
-**Auto-Creation**:
-- Binary embeds `internal/config.toml` with defaults
-- Extracted to `~/.config/yappers-of-linux/config.toml` on first run
-- Never overwrites existing user config (respects user edits)
-- Delete config.toml and restart binary to restore defaults
+</details>
 
-**Command-line overrides**: CLI flags take precedence over config.toml
+<details>
+<summary>How It Works (for the nerds)</summary>
 
-**Example**: `other/examples/config.toml`
+<br>
 
-## Model Management
+**The trick**: Keeps a 1.5-second audio buffer running constantly. When voice detection kicks in, it grabs that buffer first so your opening words aren't lost.
 
-Models auto-download from HuggingFace (Systran/faster-whisper) on first use:
-- Cache: `~/.cache/huggingface/hub/models--Systran--faster-whisper-<size>/`
-- First run: Brief pause for download (30s - few minutes)
-- Subsequent runs: Instant load from cache
-- Check installed: `yap models`
+**What happens**:
+1. Always recording to a circular buffer
+2. Voice detected → saves buffer + keeps going
+3. You stop talking for 0.8s → triggers transcription
+4. Whisper does its thing → types the text
 
-**Model Sizes**:
-- `tiny` (~75MB) - Fastest, least accurate
-- `base` (~150MB) - Good for testing
-- `small` (~500MB) - Recommended balance
-- `medium` (~1.5GB) - Better accuracy
-- `large` (~3GB) - Best accuracy, slowest
+**Why it just works**: The binary has the entire Python engine baked in. First run unpacks it, sets up a venv, installs what it needs. Updates handle dependency changes on their own. You never mess with Python directly.
 
-## TCP Server for State Monitoring
+</details>
 
-Optional feature inspired by Kanata's TCP port (12321). Enable with `--tcp` flag.
+<details>
+<summary>State Monitoring (if you're into that)</summary>
 
-**Design**: Poll-based (not WebSocket)
-- Client connects → receives JSON state → disconnects
-- Binds to `127.0.0.1` only (localhost, security)
-- Default port: 12322 (customizable: `--tcp 9999`)
+<br>
 
-**JSON Response**:
-```json
-{
-  "state": "ready",
-  "model": "tiny",
-  "device": "cpu",
-  "language": "en",
-  "timestamp": 1761481697
-}
+Want to plug this into your status bar or a desktop widget?
+
+```bash
+yap start --tcp        # Starts on port 12322
+nc 127.0.0.1 12322     # Test it out
 ```
 
-**Use Cases**: Status bars, border color systems (Kanata integration), desktop widgets
+Spits out JSON with the current state. Inspired by [Kanata's TCP port](https://github.com/jtroo/kanata).
 
-**Test**: `nc 127.0.0.1 12322`
+</details>
 
-**Implementation**: `internal/python/internal/server.py` (`StateServer` class)
+---
 
-## Output Behavior
-
-**Silent startup**: Only prints `loaded: <model>` or `loaded: <model> (fast)`
-- ALSA warnings suppressed (stderr redirected during PyAudio init in `internal/python/internal/capture.py`)
-- Optional TCP port announcement if enabled
-- No startup banner
-
-**Runtime output**:
-- `listening` - Ephemeral (overwritten with `\r` and whitespace padding)
-- `processing` - Ephemeral (overwritten with `\r` and whitespace padding)
-- Transcribed text - Persistent, followed by newline
-- Printed to stdout AND typed via ydotool/xdotool (unless `--no-typing`)
-- `error: failed to type` - If both ydotool and xdotool fail
-
-**Keyboard typing** (`internal/python/internal/output.py`):
-1. Print to stdout first (immediate feedback)
-2. Try ydotool with explicit socket path (`/run/ydotoold/socket`)
-3. Fallback to xdotool with 10ms delay between keys
-4. Append space to all typed text
-5. Silent failure if both methods fail (only error message)
-
-## Signal-Based Control
-
-**Registered handlers** (`internal/python/internal/engine.py`):
-- `SIGUSR1` → Pause: Set paused flag, stop processing
-- `SIGUSR2` → Resume: Clear paused flag, clear buffers, empty queue
-- `SIGINT` / `SIGTERM` → Graceful exit
-
-**Commands** (via `internal/commands/`):
-- `yap pause` - Sends SIGUSR1 to running process
-- `yap resume` - Sends SIGUSR2 to running process
-- `yap stop` - Sends SIGTERM to running process
-- `yap toggle` - Smart logic: pause if active, resume if paused, start if stopped
-
-**Paused state behavior**:
-- Audio queue continues filling (AudioCapture thread still runs)
-- Main loop skips processing when paused
-- Model stays loaded in memory (no re-initialization on resume)
-- Resume clears all buffers to prevent stale audio
-
-## Key Implementation Details
-
-**Threading model** (`internal/python/internal/capture.py` + `internal/python/internal/engine.py`):
-- `AudioCapture` runs in daemon thread, continuously reads mic → queue
-- Main event loop (`VoiceTyping.run()`) processes queue with 0.1s timeout
-- Thread-safe state management via locks
-- Exception suppression in reader thread prevents crashes
-
-**Audio processing** (`internal/python/internal/engine.py` + `internal/python/internal/transcribe.py`):
-- Discard recordings < `MIN_AUDIO_DURATION_SEC` (0.7s, too short for transcription)
-- Convert int16 PCM to float32 normalized [-1, 1]
-- Peak normalization applied before transcription (prevents volume issues)
-- Join all buffer chunks before numpy conversion
-
-**Process management** (`internal/utils.go`):
-- PID file: `~/.local/state/yappers-of-linux/pid`
-- State file: `~/.local/state/yappers-of-linux/state` (tracks pause/active for toggle)
-- Process discovery: `pgrep -f "python.*yappers-of-linux.*main.py"`
-- Multi-instance protection via PID file check
-
-**CUDA Support** (`internal/commands/start.go`):
-- Auto-sets `LD_LIBRARY_PATH` to include cuBLAS and cuDNN from venv site-packages
-- Required for GPU acceleration on systems without system-wide CUDA libraries
-- Paths: `venv/lib/python3.10/site-packages/nvidia/{cublas,cudnn}/lib`
-
-## Project Structure
-
-**Source Code** (embedded in binary):
-```
-cmd/
-  main.go                           # Entry point (Go)
-internal/
-  commands/                         # One file per command
-    parser.go                       # Command routing
-    start.go, stop.go, pause.go, resume.go, toggle.go
-    models.go, help.go
-  config.go                         # TOML configuration loading
-  config.toml                       # Default config (embedded)
-  selfheal.go                       # Embedding & extraction logic
-  utils.go                          # Shared helpers (GetPID, Notify, etc.)
-  constants.go                      # Shared constants
-  python/                           # Embedded Python source
-    main.py                         # Python entry point
-    internal/                       # Python modules
-      engine.py                     # VoiceTyping orchestration
-      capture.py                    # Audio capture, VAD, buffers
-      transcribe.py                 # Whisper model, transcription
-      output.py                     # Terminal display, keyboard injection
-      server.py                     # TCP state server
-      config.py                     # Centralized configuration constants
-    requirements.txt                # Python dependencies
-other/
-  examples/config.toml              # Example configuration
-  nix/ydotool-service.nix           # NixOS ydotoold service
-  install-local.sh                  # Local installation script
-go.mod                              # Go dependencies
-```
-
-**Runtime Directory** (auto-created):
-```
-~/.config/yappers-of-linux/
-  .system/                          # System-managed files (auto-extracted)
-    main.py
-    internal/                       # Python modules
-    requirements.txt
-    venv/                           # Python virtual environment
-    .deps_installed                 # SHA256 hash marker file
-  config.toml                       # User configuration (editable)
-```
+<p align="center">
+  <a href="https://github.com/DeprecatedLuar/yappers-of-linux/issues">
+    <img src="https://img.shields.io/badge/Found%20a%20bug%3F-Report%20it!-red?style=for-the-badge&logo=github&logoColor=white&labelColor=black"/>
+  </a>
+</p>
