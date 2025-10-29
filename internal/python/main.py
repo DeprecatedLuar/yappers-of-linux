@@ -49,6 +49,11 @@ def main():
         action='store_true',
         help='Disable keyboard typing (only print to terminal)'
     )
+    parser.add_argument(
+        '--output-file',
+        action='store_true',
+        help='Write transcriptions to output.txt (ephemeral, deleted on each start)'
+    )
     parser.add_argument('--gpu', action='store_const', const='gpu', dest='device', help='Use GPU (alias for --device gpu)')
     parser.add_argument('--cpu', action='store_const', const='cpu', dest='device', help='Use CPU (alias for --device cpu)')
     parser.add_argument('--cuda', action='store_const', const='gpu', dest='device', help='Use CUDA/GPU (alias for --device gpu)')
@@ -78,7 +83,8 @@ def main():
         language=args.language,
         tcp_port=args.tcp,
         fast=args.fast,
-        enable_typing=not args.no_typing
+        enable_typing=not args.no_typing,
+        output_file=args.output_file
     )
 
     # Handle Ctrl+C gracefully

@@ -222,4 +222,11 @@ func showConfigHelp() {
   "urgent"                  ` + blue + `Shorthand for "start,urgent"` + reset + `
   "false" / ""              ` + blue + `Disabled (false or empty string)` + reset
 	printTruncated(examples)
+
+	fmt.Println("\n" + header("Output File"))
+	fmt.Println()
+	printParagraph("Write transcriptions to output.txt for piping to other scripts or automation. File is ephemeral - deleted on each start for fresh sessions. Location: ~/.config/yappers-of-linux/output.txt")
+	fmt.Println()
+	printInfo("output_file = true", "Enable file output")
+	printInfo("output_file = false", "Disable (default)")
 }

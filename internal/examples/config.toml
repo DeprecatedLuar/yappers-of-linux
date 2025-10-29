@@ -7,3 +7,4 @@ device = "cpu" # cpu/cuda
 language = "en"
 fast_mode = false
 enable_typing = true
+output_file = false # Write transcriptions to ~/.config/yappers-of-linux/output.txt (ephemeral, deleted on each start)

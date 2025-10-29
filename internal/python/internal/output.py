@@ -15,14 +15,22 @@ from .config import DisplayConfig
 class TextOutput:
     """Manages text output to terminal and active window."""
 
-    def __init__(self, enable_typing=True):
+    def __init__(self, enable_typing=True, output_file=False):
         """
         Initialize text output.
 
         Args:
             enable_typing: Enable keyboard typing (default: True, set False to only print to terminal)
+            output_file: Write transcriptions to output.txt (default: False)
         """
         self.enable_typing = enable_typing
+        self.output_file = output_file
+
+        # Get output file path if enabled
+        self.output_file_path = None
+        if output_file:
+            config_dir = os.path.expanduser("~/.config/yappers-of-linux")
+            self.output_file_path = os.path.join(config_dir, "output.txt")
 
         # Detect session type (Wayland vs X11)
         self.session_type = os.environ.get('XDG_SESSION_TYPE', '').lower()
@@ -62,6 +70,15 @@ class TextOutput:
         """
         # Print to terminal first for immediate feedback
         self.print_text(text)
+
+        # Write to output file if enabled
+        if self.output_file_path:
+            try:
+                with open(self.output_file_path, 'a', encoding='utf-8') as f:
+                    f.write(text + '\n')
+            except Exception as e:
+                # Silent failure - don't interrupt voice typing for file I/O errors
+                pass
 
         # Skip keyboard typing if disabled
         if not self.enable_typing:

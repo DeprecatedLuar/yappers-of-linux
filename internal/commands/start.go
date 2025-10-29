@@ -26,6 +26,13 @@ func Start(args []string) {
 
 	cfg := internal.LoadConfig()
 
+	// Clean up previous output file (ephemeral, always fresh)
+	configDir, err := internal.GetConfigDir()
+	if err == nil {
+		outputFile := filepath.Join(configDir, "output.txt")
+		os.Remove(outputFile) // Ignore error if doesn't exist
+	}
+
 	systemDir, err := internal.GetSystemDir()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get system directory: %v\n", err)
@@ -75,6 +82,9 @@ func Start(args []string) {
 	}
 	if !enableTyping {
 		pythonArgs = append(pythonArgs, "--no-typing")
+	}
+	if cfg.OutputFile {
+		pythonArgs = append(pythonArgs, "--output-file")
 	}
 
 	cmd := exec.Command(venvPython, pythonArgs...)
