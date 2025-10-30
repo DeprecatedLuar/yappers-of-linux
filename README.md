@@ -6,7 +6,7 @@
   <img src="other/assets/yappers-of-linux-banner.png"/>
 </p>
 
-<p align="center">Voice typing for Linux that actually works</p>
+<p align="center">Voice typing for Linux that doesn't suck</p>
 
 <p align="center">
   <a href="https://github.com/DeprecatedLuar/yappers-of-linux/stargazers">
