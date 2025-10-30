@@ -52,6 +52,8 @@ class VoiceTyping:
         self._running_lock = threading.Lock()
         self._paused = False
         self._paused_lock = threading.Lock()
+        self._is_typing = False
+        self._is_typing_lock = threading.Lock()
 
         # Initialize components
         self.capture = AudioCapture()
@@ -112,13 +114,26 @@ class VoiceTyping:
         with self._paused_lock:
             self._paused = value
 
+    @property
+    def is_typing(self):
+        """Get typing flag (thread-safe)."""
+        with self._is_typing_lock:
+            return self._is_typing
+
+    @is_typing.setter
+    def is_typing(self, value):
+        """Set typing flag (thread-safe)."""
+        with self._is_typing_lock:
+            self._is_typing = value
+
     def _get_state_dict(self):
         """Get state dictionary for TCP server."""
         return {
             "state": self.state,
             "model": self.model_size,
             "device": self.device,
-            "language": self.language
+            "language": self.language,
+            "is_typing": self.is_typing
         }
 
     def pause_listening(self, _signum=None, _frame=None):
@@ -181,7 +196,9 @@ class VoiceTyping:
                             text = self.transcriber.transcribe(self.capture.get_recording())
 
                             if text:
+                                self.is_typing = True
                                 self.output.type_text(text)
+                                self.is_typing = False
                             else:
                                 self.output.clear_status_line()
 

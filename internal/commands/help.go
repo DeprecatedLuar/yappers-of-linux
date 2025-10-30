@@ -212,13 +212,13 @@ func showConfigHelp() {
 
 	fmt.Println("\n" + header("Notifications"))
 	fmt.Println()
-	printParagraph("Control desktop notifications with comma-separated events and optional 'urgent' modifier. Events: start (ready to listen), pause, stop. Urgent makes notifications persistent and ignores Do Not Disturb mode.")
+	printParagraph("Control desktop notifications with comma-separated events and optional 'urgent' modifier. Events: start (yapping started), pause, stop. Urgent makes notifications persistent and ignores Do Not Disturb mode.")
 
 	fmt.Println("\n" + header("Examples"))
 	examples := `
   "start,pause,stop"        ` + blue + `All events, normal priority` + reset + `
   "start,pause,stop,urgent" ` + blue + `All events, urgent (persistent, ignores DND)` + reset + `
-  "start"                   ` + blue + `Only when ready to listen` + reset + `
+  "start"                   ` + blue + `Only when yapping starts` + reset + `
   "urgent"                  ` + blue + `Shorthand for "start,urgent"` + reset + `
   "false" / ""              ` + blue + `Disabled (false or empty string)` + reset
 	printTruncated(examples)

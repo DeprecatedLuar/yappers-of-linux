@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"yappers-of-linux/internal"
 )
@@ -47,6 +49,7 @@ func Start(args []string) {
 	language := cfg.Language
 	fastMode := cfg.FastMode
 	enableTyping := cfg.EnableTyping
+	tcpPort := ""
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -58,6 +61,13 @@ func Start(args []string) {
 			language = args[i+1]
 		} else if arg == "--lang" && i+1 < len(args) {
 			language = args[i+1]
+		} else if arg == "--tcp" {
+			if i+1 < len(args) && !strings.HasPrefix(args[i+1], "--") {
+				tcpPort = args[i+1]
+				i++
+			} else {
+				tcpPort = "12322"
+			}
 		} else if arg == "--fast" {
 			fastMode = true
 		} else if arg == "--no-typing" {
@@ -85,6 +95,9 @@ func Start(args []string) {
 	}
 	if cfg.OutputFile {
 		pythonArgs = append(pythonArgs, "--output-file")
+	}
+	if tcpPort != "" {
+		pythonArgs = append(pythonArgs, "--tcp", tcpPort)
 	}
 
 	cmd := exec.Command(venvPython, pythonArgs...)
@@ -119,6 +132,23 @@ func Start(args []string) {
 		fmt.Fprintf(os.Stderr, "warning: failed to write pid file: %v\n", err)
 	}
 
+	// Setup signal handler for graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		// Send notification before cleanup
+		internal.Notify("Yapping stopped", "stop", cfg)
+		// Kill the Python process
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+		}
+		// Cleanup
+		os.Remove(internal.PIDFile)
+		os.Remove(internal.StateFile)
+		os.Exit(0)
+	}()
+
 	// Read stderr line by line, watching for state markers
 	go func() {
 		scanner := bufio.NewScanner(stderr)
@@ -127,7 +157,7 @@ func Start(args []string) {
 
 			// Watch for state markers
 			if strings.Contains(line, "SYSTEM_READY") {
-				internal.Notify("Ready to listen", "start", cfg)
+				internal.Notify("Yapping started", "start", cfg)
 			} else {
 				// Print other stderr output
 				fmt.Fprintln(os.Stderr, line)

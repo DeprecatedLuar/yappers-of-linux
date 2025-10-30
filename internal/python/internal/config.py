@@ -26,6 +26,7 @@ class TranscriptionConfig:
     """Whisper transcription parameters."""
 
     MIN_AUDIO_DURATION_SEC = 0.7
+    MIN_CONFIDENCE = -0.7
     BEAM_SIZE = 5
     BEST_OF = 3
     TEMPERATURE = 0.0

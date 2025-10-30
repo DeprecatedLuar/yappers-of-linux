@@ -28,7 +28,7 @@ func Toggle(args []string) {
 			os.Exit(1)
 		}
 		os.WriteFile(internal.StateFile, []byte("active"), 0644)
-		internal.Notify("Ready to listen", "start", cfg)
+		internal.Notify("Yapping started", "start", cfg)
 	} else {
 		if err := syscall.Kill(pid, syscall.SIGUSR1); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to pause: %v\n", err)

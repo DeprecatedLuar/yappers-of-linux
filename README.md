@@ -28,18 +28,15 @@ Voice typing on Linux either doesn't work or was made in the past century. How a
 
 ---
 
-## How it works
-
-Uses faster-whisper (optimized Whisper implementation) with a circular pre-recording buffer and WebRTC VAD for speech detection. The whole engine is embedded in a single Go binary that self-extracts and manages its own Python environment using hashed files to check dependencies and update them as needed.
-
 ## The cool features you've never seen before
 
-- **Portable binary** - Literally one file, zero setup, runs anywhere (well, at least Linux)
+- **Single binary** - The backend is Python but I managed to embed everything in a single binary, which means runs anywhere with no setup (well, at least Linux)
 - **Performance modes** - Faster or more accurate modes based on your hardware
 - **One toggle** - `yap toggle` pauses, resumes, or starts (control via cli)
-- **TCP server** - Intercept and pipe status changes to your bar/overlays/satelites/dog
-- **Output file** - Pipe transcriptions to other scripts for automation
+- **TCP server** - It can serve its state over TCP for status bars, widgets, AI Girlfriends, etc.
+- **Output file** - Pipe transcriptions to other scripts for automation or custom scripts
 - **Actually private** - Literally Whisper (Wow!)
+- **Configurable** - Change models, languages, devices, and all that stuff
 
 ---
 
@@ -81,6 +78,35 @@ go build -o yap cmd/main.go
 First run takes ~2 minutes to download and set up everything. After that, it's instant.
 
 ---
+
+## Commands
+
+| Command | Arguments         | Description                                      |
+|---------|-------------------|--------------------------------------------------|
+| start   | `[options]`       | Start voice typing                               |
+| stop    |                   | Stop voice typing                                |
+| toggle  |                   | Smart pause/resume/start                         |
+| pause   |                   | Pause listening                                  |
+| resume  |                   | Resume listening                                 |
+| models  |                   | Show installed models                            |
+| config  |                   | Open config in editor                            |
+| help    | `[topic]`         | Show help information                            |
+
+<details>
+<summary>Flags</summary>
+
+<br>
+
+| Flag                  | Description                                      |
+|-----------------------|--------------------------------------------------|
+| `--model MODEL`       | Choose model (tiny/base/small/medium/large)      |
+| `--device DEVICE`     | Use cpu or cuda                                  |
+| `--language LANG`     | Set language (en/es/fr/etc)                      |
+| `--tcp [PORT]`        | Enable TCP server (default: 12322)               |
+| `--fast`              | Fast mode (int8, less accurate)                  |
+| `--no-typing`         | Print to terminal only, don't type               |
+
+</details>
 
 ## Usage
 
@@ -146,22 +172,6 @@ Run `yap help config` if you want all the details.
 
 </details>
 
-<details>
-<summary>How It Works (for the nerds)</summary>
-
-<br>
-
-**The trick**: Keeps a 1.5-second audio buffer running constantly. When voice detection kicks in, it grabs that buffer first so your opening words aren't lost.
-
-**What happens**:
-1. Always recording to a circular buffer
-2. Voice detected → saves buffer + keeps going
-3. You stop talking for 0.8s → triggers transcription
-4. Whisper does its thing → types the text
-
-**Why it just works**: The binary has the entire Python engine baked in. First run unpacks it, sets up a venv, installs what it needs. Updates handle dependency changes on their own. You never mess with Python directly.
-
-</details>
 
 <details>
 <summary>State Monitoring (if you're into that)</summary>
@@ -204,6 +214,18 @@ while read line; do handle_command "$line"; done < output.txt
 ```
 
 </details>
+
+---
+
+## How it works
+
+<img src="other/assets/ermactually.jpeg" alt="Actually..." align="right" width="200"/>
+
+Constantly records audio to a 1.5-second circular buffer. When VAD detects speech, it captures that buffer plus whatever you continue saying. After 0.8 seconds of silence, it sends everything to Whisper for transcription and types the result. This means your opening words are never lost.
+
+Filters out hallucinations using confidence thresholds - keyboard clicks and background noise won't turn into random words.
+
+The entire engine (Python + dependencies) is embedded in a single Go binary that self-extracts and manages its own environment. First run takes ~2 minutes to set up, after that it's instant.
 
 ---
 

@@ -83,10 +83,15 @@ class Transcriber:
             vad_parameters=dict(
                 min_silence_duration_ms=TranscriptionConfig.VAD_MIN_SILENCE_MS,
                 speech_pad_ms=TranscriptionConfig.VAD_SPEECH_PAD_MS
-            )
+            ),
+            condition_on_previous_text=False
         )
 
-        # Join segments
-        full_text = " ".join(segment.text.strip() for segment in segments if segment.text.strip())
+        # Join segments (filter by confidence to reduce hallucinations)
+        full_text = " ".join(
+            segment.text.strip()
+            for segment in segments
+            if segment.text.strip() and segment.avg_logprob > TranscriptionConfig.MIN_CONFIDENCE
+        )
 
         return full_text

@@ -23,5 +23,5 @@ func Resume() {
 	os.WriteFile(internal.StateFile, []byte("active"), 0644)
 
 	cfg := internal.LoadConfig()
-	internal.Notify("Ready to listen", "start", cfg)
+	internal.Notify("Yapping started", "start", cfg)
 }
