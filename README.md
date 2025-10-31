@@ -53,11 +53,16 @@ curl -sSL https://raw.githubusercontent.com/DeprecatedLuar/yappers-of-linux/main
 
 **Manual Install**
 ```bash
-# Download binary from releases
-wget https://github.com/DeprecatedLuar/yappers-of-linux/releases/latest/download/yap
-chmod +x yap
-sudo mv yap /usr/local/bin/
+# Download binary from releases (amd64)
+wget https://github.com/DeprecatedLuar/yappers-of-linux/releases/latest/download/yap-linux-amd64
+chmod +x yap-linux-amd64
+sudo mv yap-linux-amd64 /usr/local/bin/yap
 yap start  # Auto-installs everything
+
+# Or for arm64
+wget https://github.com/DeprecatedLuar/yappers-of-linux/releases/latest/download/yap-linux-arm64
+chmod +x yap-linux-arm64
+sudo mv yap-linux-arm64 /usr/local/bin/yap
 ```
 
 **Build From Source**
