@@ -177,7 +177,9 @@ func Help(args []string) {
   resume              ` + blue + `Resume listening` + reset + `
   stop (kill)         ` + blue + `Stop voice typing` + reset + `
   models              ` + blue + `Show installed models` + reset + `
-  config              ` + blue + `Open config file in $EDITOR` + reset
+  config              ` + blue + `Open config file in $EDITOR` + reset + `
+  version             ` + blue + `Show version and check for updates` + reset + `
+  update [--force]    ` + blue + `Update to latest version` + reset
 	printTruncated(commands)
 
 	fmt.Println("\n" + header("Options"))

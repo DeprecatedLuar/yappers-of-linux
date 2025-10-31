@@ -16,6 +16,8 @@ func Parse(args []string) {
 	switch command {
 	case "help", "--help", "-h":
 		Help(args[2:])
+	case "version", "--version", "-v":
+		ShowVersion()
 	case "models":
 		Models()
 	case "config":
@@ -30,6 +32,8 @@ func Parse(args []string) {
 		Resume()
 	case "stop", "kill":
 		Stop()
+	case "update":
+		Update(args[2:])
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", command)
 		fmt.Fprintln(os.Stderr, "run 'yap help' for usage")

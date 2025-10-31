@@ -76,11 +76,14 @@ def main():
             print("PyTorch not installed, using CPU")
             args.device = 'cpu'
 
+    # Convert "auto" or empty string to None for auto-detect
+    language = None if args.language in ["", "auto"] else args.language
+
     # Create and run engine
     vt = VoiceTyping(
         model_size=args.model,
         device=args.device,
-        language=args.language,
+        language=language,
         tcp_port=args.tcp,
         fast=args.fast,
         enable_typing=not args.no_typing,

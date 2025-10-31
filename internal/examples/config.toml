@@ -1,10 +1,11 @@
 # ~/.config/yappers-of-linux/config.toml
 
-# Add "urgent" for persistent notifications (ignores DND)
 notifications = "start,pause,stop" # Examples: "start,pause,stop" | "urgent" | "false"
 model = "tiny" # tiny/base/small/medium/large
-device = "cpu" # cpu/cuda
-language = "en"
+device = "cpu" # cpu/gpu
+language = "" # "auto"/"" for auto-detect
 fast_mode = false
 enable_typing = true
-output_file = false # Write transcriptions to ~/.config/yappers-of-linux/output.txt (ephemeral, deleted on each start)
+output_file = false # ~/.config/yappers-of-linux/output.txt
+
+# For more help run `yap help config`
