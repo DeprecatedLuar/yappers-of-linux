@@ -603,6 +603,29 @@ if [ "$BINARY_INSTALLED" = false ]; then
     fi
 fi
 
+# Check if binary is currently running
+if pgrep -x "$BINARY_NAME" > /dev/null 2>&1; then
+    action "Stopping running instance..."
+
+    # Try graceful shutdown (SIGTERM)
+    pkill -TERM -x "$BINARY_NAME" 2>/dev/null
+
+    # Wait for clean exit (timeout: 5 seconds)
+    for i in {1..10}; do
+        sleep 0.5
+        if ! pgrep -x "$BINARY_NAME" > /dev/null 2>&1; then
+            success "Process stopped"
+            break
+        fi
+    done
+
+    # If still running, fail gracefully
+    if pgrep -x "$BINARY_NAME" > /dev/null 2>&1; then
+        echo ""
+        error "Failed to stop running $BINARY_NAME. Please stop it manually and try again."
+    fi
+fi
+
 # Install binary
 action "$MSG_INSTALL $INSTALL_DIR"
 
