@@ -446,7 +446,7 @@ handle_nixos_path() {
             echo ""
             echo "  environment.sessionVariables = {"
             echo "    PATH = [ \"$install_dir\" ];"
-            echo "  };
+            echo "  };"
             echo ""
             info "Then run: nixos-rebuild switch"
             echo ""
@@ -506,7 +506,7 @@ if [ -n "$LATEST_RELEASE" ]; then
         "${BINARY_NAME}_${OS}_${ARCH}.zip"
     )
 
-    action "$MSG_DOWNLOAD ($LATEST_RELEASE)"
+    action "$MSG_DOWNLOAD $LATEST_RELEASE"
 
     # Try direct binary download
     for pattern in "${BINARY_PATTERNS[@]}"; do
