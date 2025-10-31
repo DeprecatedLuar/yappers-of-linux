@@ -390,8 +390,8 @@ handle_nixos_path() {
 # Detect OS and architecture
 action "$MSG_DETECTING"
 SYSTEM_INFO=$(get_system_info)
-OS=$(echo "$SYSTEM_INFO" | grep -o '"os":"[^"]*"' | cut -d'"' -f4)
-ARCH=$(echo "$SYSTEM_INFO" | grep -o '"arch":"[^"]*"' | cut -d'"' -f4)
+OS=$(echo "$SYSTEM_INFO" | grep -o '"os": "[^"]*"' | cut -d'"' -f4)
+ARCH=$(echo "$SYSTEM_INFO" | grep -o '"arch": "[^"]*"' | cut -d'"' -f4)
 echo "Detected: $OS $ARCH"
 
 # Check for dependencies function
