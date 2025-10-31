@@ -8,8 +8,8 @@ BRANCH="main"
 BINARY_NAME="yap"
 
 # Installation directory
-INSTALL_DIR="/usr/local/bin"  # System-wide (requires sudo)
-# INSTALL_DIR="$HOME/.local/bin"  # User install (no sudo)
+# INSTALL_DIR="/usr/local/bin"  # System-wide (requires sudo)
+INSTALL_DIR="$HOME/.local/bin"  # User install (no sudo)
 
 # Build configuration (for fallback)
 BUILD_LANG="go"  # Language: go, rust, make
@@ -32,6 +32,7 @@ MSG_NO_GO="Go not found. Install Go and try again."
 MSG_NO_RUST="Rust/Cargo not found. Install Rust and try again."
 MSG_NO_GIT="Git not found. Install Git and try again."
 MSG_BUILD_FAILED="Build failed"
+MSG_FINAL="big hug from Luar" # Final message to user
 NEXT_STEPS=("Try running: $BINARY_NAME start" "First run will auto-install Python dependencies (~2 minutes)") # Pre-baked next steps
 
 # ASCII art (leave empty to disable)
@@ -40,6 +41,75 @@ ASCII_ART=''
 # ===== END CONFIGURATION =====
 
 set -e
+
+# ===========================================
+# UPDATE CHECK LOGIC
+# ===========================================
+
+# Semantic version comparison (returns 0 if v1 < v2, 1 if v1 >= v2)
+version_lt() {
+    local v1="$1" v2="$2"
+
+    # Split versions into major.minor.patch
+    IFS='.' read -r -a ver1 <<< "$v1"
+    IFS='.' read -r -a ver2 <<< "$v2"
+
+    # Compare major
+    [[ ${ver1[0]:-0} -lt ${ver2[0]:-0} ]] && return 0
+    [[ ${ver1[0]:-0} -gt ${ver2[0]:-0} ]] && return 1
+
+    # Compare minor
+    [[ ${ver1[1]:-0} -lt ${ver2[1]:-0} ]] && return 0
+    [[ ${ver1[1]:-0} -gt ${ver2[1]:-0} ]] && return 1
+
+    # Compare patch
+    [[ ${ver1[2]:-0} -lt ${ver2[2]:-0} ]] && return 0
+
+    return 1
+}
+
+run_update_check() {
+    local current_version="$1"
+
+    # Get latest release/tag from GitHub API
+    local latest_version=$(curl -sSL --connect-timeout 2 --max-time 5 \
+        "https://api.github.com/repos/$REPO_USER/$REPO_NAME/releases/latest" 2>/dev/null | \
+        grep '"tag_name":' | \
+        sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+
+    # If no release, try tags
+    if [ -z "$latest_version" ]; then
+        latest_version=$(curl -sSL --connect-timeout 2 --max-time 5 \
+            "https://api.github.com/repos/$REPO_USER/$REPO_NAME/tags" 2>/dev/null | \
+            grep '"name":' | \
+            head -1 | \
+            sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+    fi
+
+    # If still nothing, exit silently
+    if [ -z "$latest_version" ]; then
+        exit 0
+    fi
+
+    # Compare versions (strip 'v' prefix if present)
+    local current_clean="${current_version#v}"
+    local latest_clean="${latest_version#v}"
+
+    # If newer version is found, print it and exit
+    if version_lt "$current_clean" "$latest_clean"; then
+        echo "$latest_version"
+        exit 0
+    fi
+
+    # Otherwise, exit silently
+    exit 0
+}
+
+# Main dispatcher
+if [ "$1" = "check-update" ]; then
+    run_update_check "$2"
+    exit 0
+fi
 
 # ===========================================
 # MESSAGES LIBRARY
@@ -71,7 +141,7 @@ info() {
 }
 
 success() {
-    echo -e "${GREEN}✓ $1${NC}"
+    echo -e "${GREEN}→${NC} $1"
 }
 
 error() {
@@ -81,6 +151,10 @@ error() {
 
 warn() {
     echo -e "${YELLOW}! $1${NC}"
+}
+
+success_arrow() {
+    echo -e "${GREEN}→${NC} $1"
 }
 
 separator() {
@@ -372,7 +446,7 @@ handle_nixos_path() {
             echo ""
             echo "  environment.sessionVariables = {"
             echo "    PATH = [ \"$install_dir\" ];"
-            echo "  };"
+            echo "  };
             echo ""
             info "Then run: nixos-rebuild switch"
             echo ""
@@ -383,16 +457,17 @@ handle_nixos_path() {
     esac
 }
 
+
 # ===========================================
 # MAIN INSTALLATION LOGIC
 # ===========================================
 
+
 # Detect OS and architecture
-action "$MSG_DETECTING"
 SYSTEM_INFO=$(get_system_info)
 OS=$(echo "$SYSTEM_INFO" | grep -o '"os": "[^"]*"' | cut -d'"' -f4)
 ARCH=$(echo "$SYSTEM_INFO" | grep -o '"arch": "[^"]*"' | cut -d'"' -f4)
-echo "Detected: $OS $ARCH"
+action "Detected: $OS $ARCH"
 
 # Check for dependencies function
 require_command() {
@@ -431,7 +506,7 @@ if [ -n "$LATEST_RELEASE" ]; then
         "${BINARY_NAME}_${OS}_${ARCH}.zip"
     )
 
-    action "$MSG_DOWNLOAD ($LATEST_RELEASE)..."
+    action "$MSG_DOWNLOAD ($LATEST_RELEASE)"
 
     # Try direct binary download
     for pattern in "${BINARY_PATTERNS[@]}"; do
@@ -529,7 +604,7 @@ if [ "$BINARY_INSTALLED" = false ]; then
 fi
 
 # Install binary
-action "$MSG_INSTALL $INSTALL_DIR..."
+action "$MSG_INSTALL $INSTALL_DIR"
 
 # Check if sudo is needed
 if [[ "$INSTALL_DIR" == /usr/* ]] || [[ "$INSTALL_DIR" == /opt/* ]]; then
@@ -547,8 +622,8 @@ rm -f "$BINARY_NAME"
 # Ensure install directory is in PATH
 ensure_in_path "$INSTALL_DIR"
 
+success "Done"
 echo ""
-success "$MSG_INSTALL_COMPLETE"
 
 # Show ASCII art if configured
 if [ -n "$ASCII_ART" ]; then
@@ -560,3 +635,8 @@ fi
 for step in "${NEXT_STEPS[@]}"; do
     echo "$step"
 done
+
+if [ -n "$MSG_FINAL" ]; then
+    echo ""
+    info "$MSG_FINAL"
+fi
