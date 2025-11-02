@@ -100,10 +100,13 @@ class AudioCapture:
         """Continuously read audio from microphone into queue."""
         while self._running:
             try:
+                if self.stream is None:
+                    break
                 chunk = self.stream.read(AudioConfig.CHUNK_SIZE, exception_on_overflow=False)
                 self.audio_queue.put(chunk)
-            except (OSError, IOError):
-                pass
+            except (OSError, IOError, AttributeError):
+                # Stream closed or became None during pause
+                break
 
     def get_chunk(self, timeout=None):
         """

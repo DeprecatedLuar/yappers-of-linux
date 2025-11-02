@@ -153,10 +153,6 @@ class VoiceTyping:
             # Restart audio capture (reopens stream if closed)
             self.capture.resume_capture()
 
-            # Wait for pre-buffer to fill
-            self.state = "warming_up"
-            time.sleep(1.5)
-
             self.state = "ready"
 
     def run(self):
