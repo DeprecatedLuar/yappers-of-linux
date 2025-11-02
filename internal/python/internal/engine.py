@@ -87,7 +87,7 @@ class VoiceTyping:
         with self._state_lock:
             self._state = new_state
         # Update terminal display
-        if new_state in ["ready", "recording", "processing", "paused"]:
+        if new_state in ["ready", "recording", "processing", "paused", "warming_up"]:
             self.output.print_status(new_state)
 
     @property
@@ -140,6 +140,7 @@ class VoiceTyping:
         """Pause listening (SIGUSR1 handler)."""
         if not self.paused:
             self.paused = True
+            self.capture.pause_capture()
             self.state = "paused"
 
     def resume_listening(self, _signum=None, _frame=None):
@@ -148,6 +149,14 @@ class VoiceTyping:
             self.paused = False
             self.capture.reset_buffers()
             self.capture.clear_queue()
+
+            # Restart audio capture (reopens stream if closed)
+            self.capture.resume_capture()
+
+            # Wait for pre-buffer to fill
+            self.state = "warming_up"
+            time.sleep(1.5)
+
             self.state = "ready"
 
     def run(self):

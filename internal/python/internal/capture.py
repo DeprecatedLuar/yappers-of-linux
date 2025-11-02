@@ -61,13 +61,39 @@ class AudioCapture:
         self._reader_thread.daemon = True
         self._reader_thread.start()
 
-    def stop(self):
-        """Stop audio capture and cleanup."""
+    def pause_capture(self):
+        """Pause capture (stop thread, close stream, keep PyAudio alive)."""
         self._running = False
         if self._reader_thread:
             self._reader_thread.join(timeout=1.0)
-        self.stream.stop_stream()
-        self.stream.close()
+            self._reader_thread = None
+        if self.stream:
+            self.stream.stop_stream()
+            self.stream.close()
+            self.stream = None
+
+    def resume_capture(self):
+        """Resume capture (reopen stream if needed, restart thread)."""
+        # Reopen stream if it was closed
+        if not self.stream:
+            self.stream = self.audio.open(
+                format=pyaudio.paInt16,
+                channels=1,
+                rate=AudioConfig.RATE,
+                input=True,
+                frames_per_buffer=AudioConfig.CHUNK_SIZE
+            )
+        # Start capture thread
+        self.start()
+
+    def stop(self):
+        """Stop audio capture and cleanup (full teardown)."""
+        self._running = False
+        if self._reader_thread:
+            self._reader_thread.join(timeout=1.0)
+        if self.stream:
+            self.stream.stop_stream()
+            self.stream.close()
         self.audio.terminate()
 
     def _audio_reader_thread(self):
