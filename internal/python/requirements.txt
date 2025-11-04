@@ -1,14 +1,7 @@
-# Core dependencies
 faster-whisper==1.1.1
 numpy>=1.24.0
 pyaudio==0.2.14
 webrtcvad==2.0.10
-requests>=2.31.0  # Required by faster-whisper
-
-# Optional but recommended
-torch>=2.0.0  # For GPU support
-nvidia-cublas-cu12  # cuBLAS for CUDA 12.x (required for GPU inference)
-nvidia-cudnn-cu12  # cuDNN for CUDA 12.x (required for GPU inference)
-pyautogui>=0.9.54  # Alternative keyboard input
-python-xlib>=0.33  # Required by pyautogui on Linux
-pillow>=10.0.0  # For pyautogui screenshots
+requests>=2.31.0
+nvidia-cublas-cu12
+nvidia-cudnn-cu12

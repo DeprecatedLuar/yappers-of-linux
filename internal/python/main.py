@@ -68,12 +68,12 @@ def main():
     # Validate GPU availability
     if args.device == 'gpu':
         try:
-            import torch
-            if not torch.cuda.is_available():
+            import ctranslate2
+            if ctranslate2.get_cuda_device_count() == 0:
                 print("GPU not available, using CPU")
                 args.device = 'cpu'
-        except ImportError:
-            print("PyTorch not installed, using CPU")
+        except Exception:
+            print("GPU not available, using CPU")
             args.device = 'cpu'
 
     # Convert "auto" or empty string to None for auto-detect
