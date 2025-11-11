@@ -9,10 +9,9 @@ REPO_NAME="yappers-of-linux"
 INSTALL_DIR="$HOME/.local/bin"
 BUILD_CMD="go build -o $BINARY_NAME cmd/main.go"
 
-# Optional branding (leave empty to disable)
-ASCII_ART=''
 MSG_FINAL="big hug from Luar"
 NEXT_STEPS="Try running: $BINARY_NAME start|First run will auto-install Python dependencies (~2 minutes)"
+ASCII_ART=''
 
 # ===== END CONFIGURATION =====
 
