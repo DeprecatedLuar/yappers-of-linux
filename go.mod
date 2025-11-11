@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/DeprecatedLuar/gohelp v0.0.0-00010101000000-000000000000
+	github.com/DeprecatedLuar/yappers-of-linux/lib/satellite v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -16,3 +17,5 @@ require (
 )
 
 replace github.com/DeprecatedLuar/gohelp => ./lib/gohelp
+
+replace github.com/DeprecatedLuar/yappers-of-linux/lib/satellite => ./lib/satellite

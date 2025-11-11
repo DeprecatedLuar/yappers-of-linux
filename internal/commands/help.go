@@ -30,6 +30,7 @@ func Help(args []string) {
 	gohelp.Item("pause", "Pause listening")
 	gohelp.Item("resume", "Resume listening")
 	gohelp.Item("stop (kill)", "Stop voice typing")
+	gohelp.Item("output (log, cat, show)", "View output file contents")
 	gohelp.Item("models", "Show installed models")
 	gohelp.Item("config", "Open config file in $EDITOR")
 	gohelp.Item("version", "Show version and check for updates")

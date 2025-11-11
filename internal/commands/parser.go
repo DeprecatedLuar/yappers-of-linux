@@ -32,6 +32,8 @@ func Parse(args []string) {
 		Resume()
 	case "stop", "kill":
 		Stop()
+	case "output", "log", "cat", "show":
+		Output()
 	case "update":
 		Update(args[2:])
 	default:

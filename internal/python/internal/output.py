@@ -75,7 +75,7 @@ class TextOutput:
         if self.output_file_path:
             try:
                 with open(self.output_file_path, 'a', encoding='utf-8') as f:
-                    f.write(text + '\n')
+                    f.write(text + '\n\n')
             except Exception as e:
                 # Silent failure - don't interrupt voice typing for file I/O errors
                 pass

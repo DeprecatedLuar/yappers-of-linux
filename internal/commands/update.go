@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/DeprecatedLuar/yappers-of-linux/lib/satellite"
 )
 
 var Version = "0.0.0"
 
-func Update(args []string) {
-	scriptURL := "https://raw.githubusercontent.com/DeprecatedLuar/yappers-of-linux/main/install.sh"
+var updater = satellite.New("DeprecatedLuar", "yappers-of-linux")
 
+func Update(args []string) {
 	// Check for --force flag
 	force := false
 	for _, arg := range args {
@@ -24,20 +25,17 @@ func Update(args []string) {
 
 	if force {
 		fmt.Println("Force update enabled. Installing latest version...")
-		runInstallScript(scriptURL)
+		runInstaller()
 		return
 	}
 
 	// Check for updates
-	curlCmd := fmt.Sprintf("curl -sSL %s | bash -s check-update %s", scriptURL, Version)
-	cmd := exec.Command("bash", "-c", curlCmd)
-	output, err := cmd.Output()
+	newVersion, err := updater.CheckForUpdate(Version)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to check for updates: %v\n", err)
 		return
 	}
 
-	newVersion := strings.TrimSpace(string(output))
 	if newVersion == "" {
 		fmt.Println("You're golden. Already on the latest version.")
 		return
@@ -57,20 +55,15 @@ func Update(args []string) {
 	response = strings.TrimSpace(strings.ToLower(response))
 	if response == "y" || response == "yes" {
 		fmt.Println("\nInstalling update...")
-		runInstallScript(scriptURL)
+		runInstaller()
 	} else {
 		fmt.Println("Update cancelled. You can update later by running:")
-		fmt.Printf("  curl -sSL %s | bash\n", scriptURL)
+		fmt.Printf("  yap update --force\n")
 	}
 }
 
-func runInstallScript(scriptURL string) {
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("curl -sSL %s | bash", scriptURL))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	if err := cmd.Run(); err != nil {
+func runInstaller() {
+	if err := updater.RunInstaller(); err != nil {
 		fmt.Fprintf(os.Stderr, "\nUpdate failed: %v\n", err)
 		os.Exit(1)
 	}
