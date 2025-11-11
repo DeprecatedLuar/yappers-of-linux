@@ -24,7 +24,7 @@
 
 ## Somehow I had to build this
 
-Voice typing on Linux either doesn't work or was made in the past century. How android beats Linux on that for the past 10 years? I can't let that slide.
+(Local) Voice typing on Linux either doesn't work or was made in the past century. How android beats Linux on that for the past 10 years? I can't let that slide.
 
 ---
 
