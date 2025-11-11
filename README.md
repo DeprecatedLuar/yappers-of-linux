@@ -93,6 +93,7 @@ First run takes ~2 minutes to download and set up everything. After that, it's i
 | toggle  |                   | Smart pause/resume/start                         |
 | pause   |                   | Pause listening                                  |
 | resume  |                   | Resume listening                                 |
+| output  |                   | View output file (aliases: log, cat, show)       |
 | models  |                   | Show installed models                            |
 | config  |                   | Open config in editor                            |
 | help    | `[topic]`         | Show help information                            |
@@ -203,11 +204,14 @@ Enable `output_file = true` in config to write transcriptions to `~/.config/yapp
 
 **How it works**:
 - File is ephemeral - deleted on each `yap start` (fresh session)
-- Each transcription appends a new line
-- Silent operation (no terminal output)
+- Each transcription is separated by a blank line (paragraph style)
+- View anytime with `yap output` (or `yap log`, `yap cat`, `yap show`)
 
 **Use cases**:
 ```bash
+# View the output file
+yap output
+
 # Pipe to another script
 tail -f ~/.config/yappers-of-linux/output.txt | your-script.sh
 
