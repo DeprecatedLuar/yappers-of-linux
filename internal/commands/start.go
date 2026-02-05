@@ -80,8 +80,7 @@ func Start(args []string) {
 	}
 
 	if enableTyping {
-		if err := internal.EnsureYdotoold(); err != nil {
-			fmt.Fprintf(os.Stderr, "ydotoold setup failed: %v\n", err)
+		if err := internal.CheckTypingDependencies(); err != nil {
 			os.Exit(1)
 		}
 	}

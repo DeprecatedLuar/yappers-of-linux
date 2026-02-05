@@ -13,8 +13,11 @@ import os
 import queue
 import threading
 import collections
+import warnings
 import pyaudio
-import webrtcvad
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=UserWarning)
+    import webrtcvad
 
 from .config import AudioConfig, VADConfig, ThreadConfig
 
