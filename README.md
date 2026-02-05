@@ -69,14 +69,14 @@ sudo mv yap-linux-arm64 /usr/local/bin/yap
 ```bash
 git clone https://github.com/DeprecatedLuar/yappers-of-linux.git
 cd yappers-of-linux
-go build -o yap cmd/main.go
+go build -o yap cmd/yap/main.go
 ./yap start
 ```
 
 **System Requirements**:
 - `python3` (3.10+)
 - `portaudio19-dev` (for mic access)
-- `ydotool` + `ydotoold` (Wayland) OR `xdotool` (X11)
+- `wtype` (Wayland) OR `xdotool` (X11)
 
 </details>
 

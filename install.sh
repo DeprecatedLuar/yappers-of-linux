@@ -7,7 +7,7 @@ BINARY_NAME="yap"
 REPO_USER="DeprecatedLuar"
 REPO_NAME="yappers-of-linux"
 INSTALL_DIR="$HOME/.local/bin"
-BUILD_CMD="go build -o $BINARY_NAME cmd/main.go"
+BUILD_CMD="go build -o $BINARY_NAME cmd/yap/main.go"
 
 MSG_FINAL="big hug from Luar"
 NEXT_STEPS="Try running: $BINARY_NAME start|First run will auto-install Python dependencies (~2 minutes)"

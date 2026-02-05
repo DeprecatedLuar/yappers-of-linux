@@ -18,7 +18,7 @@ jobs:
       BINARY_NAME: "yap"                              
       GO_MODULE_PATH: "yappers-of-linux"              # Your go.mod module name
       VERSION_VAR_PATH: "internal/commands.Version"   # Path to version variable (e.g., "internal/version.Version")
-      MAIN_GO_FILE: "cmd/main.go"                     # Path to main.go entry point
+      MAIN_GO_FILE: "cmd/yap/main.go"                   # Path to main.go entry point
     steps:
     - uses: actions/checkout@v4
 
