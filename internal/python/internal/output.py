@@ -3,7 +3,7 @@ Text output to terminal and active window.
 
 Handles:
 - Printing transcribed text to terminal
-- Typing text into active window via ydotool (Wayland) or xdotool (X11)
+- Typing text into active window via wtype (Wayland) or xdotool (X11)
 - Clearing ephemeral status lines
 """
 
@@ -63,7 +63,7 @@ class TextOutput:
 
     def type_text(self, text):
         """
-        Type text into active window using ydotool or xdotool.
+        Type text into active window using wtype or xdotool.
 
         Args:
             text: Text to type (space will be appended automatically)
@@ -94,18 +94,17 @@ class TextOutput:
             self._type_with_fallback(text)
 
     def _type_wayland(self, text):
-        """Type text on Wayland using ydotool."""
+        """Type text on Wayland using wtype."""
         try:
             subprocess.run(
-                ['ydotool', 'type', text + ' '],
+                ['wtype', text + ' '],
                 capture_output=True,
-                text=True,
                 check=True
             )
         except FileNotFoundError:
-            print(f"\rerror: ydotool not installed (required for Wayland)")
+            print(f"\rerror: wtype not installed (required for Wayland)")
         except subprocess.CalledProcessError:
-            print(f"\rerror: ydotool failed (is ydotoold running? try: sudo ydotoold &)")
+            print(f"\rerror: wtype failed")
 
     def _type_x11(self, text):
         """Type text on X11 using xdotool."""
@@ -122,20 +121,11 @@ class TextOutput:
             print(f"\rerror: xdotool failed")
 
     def _type_with_fallback(self, text):
-        """Try ydotool first, fallback to xdotool (for unknown session types)."""
-        try:
-            subprocess.run(
-                ['ydotool', 'type', text + ' '],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-        except (subprocess.CalledProcessError, FileNotFoundError):
+        """Try wtype, then xdotool (for unknown session types)."""
+        for cmd in (['wtype', text + ' '], ['xdotool', 'type', '--delay', '10', text + ' ']):
             try:
-                subprocess.run(
-                    ['xdotool', 'type', '--delay', '10', text + ' '],
-                    capture_output=True,
-                    check=True
-                )
+                subprocess.run(cmd, capture_output=True, check=True)
+                return
             except (subprocess.CalledProcessError, FileNotFoundError):
-                print(f"\rerror: failed to type (session: {self.session_type})")
+                continue
+        print(f"\rerror: failed to type (install wtype or xdotool)")
