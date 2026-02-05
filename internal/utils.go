@@ -64,7 +64,9 @@ func Notify(message string, event string, cfg *Config) {
 	}
 
 	cmd := exec.Command("notify-send", "-i", "audio-input-microphone", "-u", urgency, "Yap", message)
-	cmd.Start()
+	if err := cmd.Start(); err == nil {
+		go cmd.Wait()
+	}
 }
 
 func IsWayland() bool {
@@ -174,6 +176,8 @@ func StartYdotoold() error {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+
+	go cmd.Wait()
 
 	time.Sleep(500 * time.Millisecond)
 
