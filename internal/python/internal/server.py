@@ -30,6 +30,8 @@ class StateServer:
         self._running = False
         self._server_thread = None
         self._server_socket = None
+        self._clients = []
+        self._clients_lock = threading.Lock()
 
     def start(self):
         """Start TCP server in background thread."""
@@ -39,9 +41,34 @@ class StateServer:
         self._server_thread.start()
         print(f"tcp: {self.port}")
 
+    def broadcast(self, state_dict):
+        """Send state update to all connected clients."""
+        state_dict['timestamp'] = int(time.time())
+        line = json.dumps(state_dict) + "\n"
+        encoded = line.encode('utf-8')
+        with self._clients_lock:
+            active = []
+            for client in self._clients:
+                try:
+                    client.send(encoded)
+                    active.append(client)
+                except (OSError, ConnectionError):
+                    try:
+                        client.close()
+                    except OSError:
+                        pass
+            self._clients = active
+
     def stop(self):
         """Stop TCP server."""
         self._running = False
+        with self._clients_lock:
+            for client in self._clients:
+                try:
+                    client.close()
+                except OSError:
+                    pass
+            self._clients = []
         if self._server_socket:
             try:
                 self._server_socket.close()
@@ -65,7 +92,8 @@ class StateServer:
                     state_json = self._get_state_json()
                     response = state_json + "\n"
                     client.send(response.encode('utf-8'))
-                    client.close()
+                    with self._clients_lock:
+                        self._clients.append(client)
                 except socket.timeout:
                     continue
                 except (OSError, ConnectionError):

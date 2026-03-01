@@ -50,6 +50,9 @@ func Start(args []string) {
 	fastMode := cfg.FastMode
 	enableTyping := cfg.EnableTyping
 	tcpPort := ""
+	if cfg.TCPPort > 0 {
+		tcpPort = strconv.Itoa(cfg.TCPPort)
+	}
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]

@@ -21,6 +21,7 @@ type Config struct {
 	EnableTyping  bool   `toml:"enable_typing"`
 	OutputFile    bool   `toml:"output_file"`
 	Timeout       int    `toml:"timeout"`
+	TCPPort       int    `toml:"tcp_port"`
 }
 
 func ParseNotifications(notifStr string) NotificationConfig {

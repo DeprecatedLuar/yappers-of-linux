@@ -8,5 +8,6 @@ fast_mode = false
 enable_typing = true
 output_file = false # ~/.config/yappers-of-linux/output.txt
 timeout = 30         # seconds of no output before auto-pause (0 = disabled)
+tcp_port = 12322     # TCP push server port (0 = disabled)
 
 # For more help run `yap help config`

@@ -92,6 +92,8 @@ class VoiceTyping:
         """Set state and update display (thread-safe)."""
         with self._state_lock:
             self._state = new_state
+        if self.server:
+            self.server.broadcast(self._get_state_dict())
         # Update terminal display
         if new_state in ["ready", "recording", "processing", "paused", "warming_up"]:
             self.output.print_status(new_state)
