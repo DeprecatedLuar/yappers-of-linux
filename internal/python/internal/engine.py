@@ -95,7 +95,7 @@ class VoiceTyping:
         if self.server:
             self.server.broadcast(self._get_state_dict())
         # Update terminal display
-        if new_state in ["ready", "recording", "processing", "paused", "warming_up"]:
+        if new_state in ["ready", "listening", "silence", "processing", "paused", "warming_up"]:
             self.output.print_status(new_state)
 
     @property
@@ -206,7 +206,7 @@ class VoiceTyping:
 
                 if is_speech and not self.capture.is_recording:
                     # Speech detected - start recording
-                    self.state = "recording"
+                    self.state = "listening"
                     self.capture.start_recording()
 
                 elif self.capture.is_recording:
@@ -216,6 +216,7 @@ class VoiceTyping:
                     if not is_speech:
                         # Silence detected
                         self.capture.increment_silence()
+                        self.state = "silence"
 
                         if self.capture.should_stop_recording():
                             # Silence threshold exceeded - transcribe
@@ -235,6 +236,7 @@ class VoiceTyping:
                     else:
                         # Speech continues - reset silence counter
                         self.capture.reset_silence()
+                        self.state = "listening"
 
         except KeyboardInterrupt:
             pass
