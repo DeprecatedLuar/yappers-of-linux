@@ -20,6 +20,7 @@ type Config struct {
 	FastMode      bool   `toml:"fast_mode"`
 	EnableTyping  bool   `toml:"enable_typing"`
 	OutputFile    bool   `toml:"output_file"`
+	Timeout       int    `toml:"timeout"`
 }
 
 func ParseNotifications(notifStr string) NotificationConfig {
@@ -72,6 +73,7 @@ func LoadConfig() *Config {
 			FastMode:      false,
 			EnableTyping:  true,
 			OutputFile:    false,
+			Timeout:       0,
 		}
 	}
 
@@ -85,6 +87,7 @@ func LoadConfig() *Config {
 		FastMode:      false,
 		EnableTyping:  true,
 		OutputFile:    false,
+		Timeout:       0,
 	}
 	if _, err := toml.DecodeFile(configPath, cfg); err != nil {
 		return cfg

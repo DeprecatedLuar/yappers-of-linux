@@ -98,6 +98,9 @@ func Start(args []string) {
 	if tcpPort != "" {
 		pythonArgs = append(pythonArgs, "--tcp", tcpPort)
 	}
+	if cfg.Timeout > 0 {
+		pythonArgs = append(pythonArgs, "--timeout", strconv.Itoa(cfg.Timeout))
+	}
 
 	cmd := exec.Command(venvPython, pythonArgs...)
 	cmd.Stdout = os.Stdout

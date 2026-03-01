@@ -11,6 +11,7 @@ Coordinates all components:
 """
 
 import signal
+import subprocess
 import threading
 import queue
 import time
@@ -24,7 +25,7 @@ from .server import StateServer
 class VoiceTyping:
     """Main voice typing engine."""
 
-    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False, enable_typing=True, output_file=False):
+    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False, enable_typing=True, output_file=False, timeout=0):
         """
         Initialize voice typing engine.
 
@@ -44,6 +45,8 @@ class VoiceTyping:
         self.fast = fast
         self.enable_typing = enable_typing
         self.output_file = output_file
+        self.timeout = timeout
+        self._last_output_time = time.time()
 
         # State management
         self._state = "initializing"
@@ -74,6 +77,9 @@ class VoiceTyping:
         # Signal to Go that system is ready (via stderr to not interfere with stdout display)
         import sys
         print("SYSTEM_READY", file=sys.stderr, flush=True)
+
+        if self.timeout > 0:
+            self._start_timeout_watcher()
 
     @property
     def state(self):
@@ -136,6 +142,19 @@ class VoiceTyping:
             "is_typing": self.is_typing
         }
 
+    def _start_timeout_watcher(self):
+        """Daemon thread: auto-pause after N seconds of no text output."""
+        def watcher():
+            while self.running:
+                time.sleep(1)
+                if self.state != 'ready':
+                    continue
+                if time.time() - self._last_output_time >= self.timeout:
+                    subprocess.run(['yap', 'pause'])
+
+        t = threading.Thread(target=watcher, daemon=True)
+        t.start()
+
     def pause_listening(self, _signum=None, _frame=None):
         """Pause listening (SIGUSR1 handler)."""
         if not self.paused:
@@ -153,6 +172,7 @@ class VoiceTyping:
             # Restart audio capture (reopens stream if closed)
             self.capture.resume_capture()
 
+            self._last_output_time = time.time()
             self.state = "ready"
 
     def run(self):
@@ -204,6 +224,7 @@ class VoiceTyping:
                                 self.is_typing = True
                                 self.output.type_text(text)
                                 self.is_typing = False
+                                self._last_output_time = time.time()
                             else:
                                 self.output.clear_status_line()
 

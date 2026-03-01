@@ -58,6 +58,12 @@ def main():
     parser.add_argument('--cpu', action='store_const', const='cpu', dest='device', help='Use CPU (alias for --device cpu)')
     parser.add_argument('--cuda', action='store_const', const='gpu', dest='device', help='Use CUDA/GPU (alias for --device gpu)')
     parser.add_argument('--lang', dest='language', help='Language code (alias for --language)')
+    parser.add_argument(
+        '--timeout',
+        type=int,
+        default=0,
+        help='Seconds of no output before auto-pause (0 = disabled)'
+    )
 
     args = parser.parse_args()
 
@@ -87,7 +93,8 @@ def main():
         tcp_port=args.tcp,
         fast=args.fast,
         enable_typing=not args.no_typing,
-        output_file=args.output_file
+        output_file=args.output_file,
+        timeout=args.timeout
     )
 
     # Handle Ctrl+C gracefully
