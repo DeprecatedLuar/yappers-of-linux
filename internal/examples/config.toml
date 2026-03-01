@@ -7,6 +7,6 @@ language = "" # "auto"/"" for auto-detect
 fast_mode = false
 enable_typing = true
 output_file = false # ~/.config/yappers-of-linux/output.txt
-timeout = 10         # seconds of no output before auto-pause (0 = disabled)
+timeout = 30         # seconds of no output before auto-pause (0 = disabled)
 
 # For more help run `yap help config`

@@ -25,7 +25,7 @@ func GetProjectDir() (string, error) {
 }
 
 func GetPID() (int, error) {
-	data, err := os.ReadFile(PIDFile)
+	data, err := os.ReadFile(GetPIDFile())
 	if err != nil {
 		return 0, err
 	}
@@ -42,7 +42,7 @@ func GetPID() (int, error) {
 
 	err = process.Signal(syscall.Signal(0))
 	if err != nil {
-		os.Remove(PIDFile)
+		os.Remove(GetPIDFile())
 		return 0, err
 	}
 

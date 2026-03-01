@@ -29,7 +29,8 @@ class TextOutput:
         # Get output file path if enabled
         self.output_file_path = None
         if output_file:
-            config_dir = os.path.expanduser("~/.config/yappers-of-linux")
+            xdg_config = os.environ.get('XDG_CONFIG_HOME', os.path.join(os.path.expanduser('~'), '.config'))
+            config_dir = os.path.join(xdg_config, 'yappers-of-linux')
             self.output_file_path = os.path.join(config_dir, "output.txt")
 
         # Detect session type (Wayland vs X11)

@@ -20,7 +20,7 @@ func Resume() {
 		os.Exit(1)
 	}
 
-	os.WriteFile(internal.StateFile, []byte("active"), 0644)
+	os.WriteFile(internal.GetStateFile(), []byte("active"), 0644)
 
 	cfg := internal.LoadConfig()
 	internal.Notify("Yapping started", "start", cfg)

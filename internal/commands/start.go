@@ -130,7 +130,7 @@ func Start(args []string) {
 	}
 
 	pidData := []byte(strconv.Itoa(cmd.Process.Pid))
-	if err := os.WriteFile(internal.PIDFile, pidData, 0644); err != nil {
+	if err := os.WriteFile(internal.GetPIDFile(), pidData, 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: failed to write pid file: %v\n", err)
 	}
 
@@ -146,8 +146,8 @@ func Start(args []string) {
 			cmd.Process.Kill()
 		}
 		// Cleanup
-		os.Remove(internal.PIDFile)
-		os.Remove(internal.StateFile)
+		os.Remove(internal.GetPIDFile())
+		os.Remove(internal.GetStateFile())
 		os.Exit(0)
 	}()
 
@@ -168,6 +168,6 @@ func Start(args []string) {
 	}()
 
 	cmd.Wait()
-	os.Remove(internal.PIDFile)
-	os.Remove(internal.StateFile)
+	os.Remove(internal.GetPIDFile())
+	os.Remove(internal.GetStateFile())
 }

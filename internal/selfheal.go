@@ -18,8 +18,7 @@ var pythonFiles embed.FS
 var defaultConfig []byte
 
 const (
-	ConfigDir = ".config/yappers-of-linux"
-	SystemDir = ".system"
+	appDirName = "yappers-of-linux" // used under both XDG_CONFIG_HOME and XDG_DATA_HOME
 )
 
 func verifyPythonFiles() bool {
@@ -91,27 +90,40 @@ func SelfHeal() error {
 }
 
 func GetConfigDir() (string, error) {
+	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
+		return filepath.Join(xdg, appDirName), nil
+	}
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(homeDir, ConfigDir), nil
+	return filepath.Join(homeDir, ".config", appDirName), nil
 }
 
 func GetSystemDir() (string, error) {
-	configDir, err := GetConfigDir()
+	if xdg := os.Getenv("XDG_DATA_HOME"); xdg != "" {
+		return filepath.Join(xdg, appDirName), nil
+	}
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(configDir, SystemDir), nil
+	return filepath.Join(homeDir, ".local", "share", appDirName), nil
 }
 
 func ensureConfigDir() error {
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return err
+	}
+
 	systemDir, err := GetSystemDir()
 	if err != nil {
 		return err
 	}
-
 	return os.MkdirAll(systemDir, 0755)
 }
 
