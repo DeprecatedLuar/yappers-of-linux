@@ -165,6 +165,13 @@ class VoiceTyping:
         t = threading.Thread(target=watcher, daemon=True)
         t.start()
 
+    def toggle_listening(self, _signum=None, _frame=None):
+        """Toggle pause/resume (SIGHUP handler)."""
+        if self.paused:
+            self.resume_listening()
+        else:
+            self.pause_listening()
+
     def pause_listening(self, _signum=None, _frame=None):
         """Pause listening (SIGUSR1 handler)."""
         if self.debug:
@@ -195,6 +202,7 @@ class VoiceTyping:
     def run(self):
         """Main event loop."""
         # Register signal handlers
+        signal.signal(signal.SIGHUP, self.toggle_listening)
         signal.signal(signal.SIGUSR1, self.pause_listening)
         signal.signal(signal.SIGUSR2, self.resume_listening)
 

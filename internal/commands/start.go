@@ -157,7 +157,6 @@ func Start(args []string) {
 		}
 		// Cleanup
 		os.Remove(internal.GetPIDFile())
-		os.Remove(internal.GetStateFile())
 		os.Exit(0)
 	}()
 
@@ -179,5 +178,4 @@ func Start(args []string) {
 
 	cmd.Wait()
 	os.Remove(internal.GetPIDFile())
-	os.Remove(internal.GetStateFile())
 }
