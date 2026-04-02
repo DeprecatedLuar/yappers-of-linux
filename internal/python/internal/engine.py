@@ -25,7 +25,7 @@ from .server import StateServer
 class VoiceTyping:
     """Main voice typing engine."""
 
-    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False, enable_typing=True, output_file=False, timeout=0):
+    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False, enable_typing=True, output_file=False, timeout=0, debug=False):
         """
         Initialize voice typing engine.
 
@@ -46,6 +46,7 @@ class VoiceTyping:
         self.enable_typing = enable_typing
         self.output_file = output_file
         self.timeout = timeout
+        self.debug = debug
         self._last_output_time = time.time()
 
         # State management
@@ -64,7 +65,8 @@ class VoiceTyping:
         self.output = TextOutput(enable_typing, output_file)
 
         mode = "fast" if fast else "accurate"
-        print(f"model: {model_size} | device: {device} | language: {language} | mode: {mode}\n")
+        tcp_info = f" | tcp: {tcp_port}" if tcp_port else ""
+        print(f"model: {model_size} | device: {device} | language: {language} | mode: {mode}{tcp_info}\n")
 
         # Start TCP server if requested
         self.server = None
@@ -91,7 +93,13 @@ class VoiceTyping:
     def state(self, new_state):
         """Set state and update display (thread-safe)."""
         with self._state_lock:
+            if self._state == new_state:
+                return
+            old_state = self._state
             self._state = new_state
+        if self.debug:
+            import sys, threading
+            print(f"[DEBUG] state: {old_state} → {new_state} (thread: {threading.current_thread().name})", file=sys.stderr, flush=True)
         if self.server:
             self.server.broadcast(self._get_state_dict())
         # Update terminal display
@@ -152,13 +160,17 @@ class VoiceTyping:
                 if self.state != 'ready':
                     continue
                 if time.time() - self._last_output_time >= self.timeout:
-                    subprocess.run(['yap', 'pause'])
+                    self.pause_listening()
 
         t = threading.Thread(target=watcher, daemon=True)
         t.start()
 
     def pause_listening(self, _signum=None, _frame=None):
         """Pause listening (SIGUSR1 handler)."""
+        if self.debug:
+            import sys
+            src = "signal" if _signum is not None else "timeout"
+            print(f"[DEBUG] pause_listening called (source: {src})", file=sys.stderr, flush=True)
         if not self.paused:
             self.paused = True
             self.capture.pause_capture()
@@ -166,6 +178,9 @@ class VoiceTyping:
 
     def resume_listening(self, _signum=None, _frame=None):
         """Resume listening (SIGUSR2 handler)."""
+        if self.debug:
+            import sys
+            print(f"[DEBUG] resume_listening called", file=sys.stderr, flush=True)
         if self.paused:
             self.paused = False
             self.capture.reset_buffers()
@@ -231,8 +246,9 @@ class VoiceTyping:
                             else:
                                 self.output.clear_status_line()
 
-                            self.state = "ready"
-                            self.capture.reset_buffers()
+                            if not self.paused:
+                                self.state = "ready"
+                                self.capture.reset_buffers()
                     else:
                         # Speech continues - reset silence counter
                         self.capture.reset_silence()

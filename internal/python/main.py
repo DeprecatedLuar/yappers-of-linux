@@ -64,6 +64,11 @@ def main():
         default=0,
         help='Seconds of no output before auto-pause (0 = disabled)'
     )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable debug logging (state transitions, signals, etc.)'
+    )
 
     args = parser.parse_args()
 
@@ -94,7 +99,8 @@ def main():
         fast=args.fast,
         enable_typing=not args.no_typing,
         output_file=args.output_file,
-        timeout=args.timeout
+        timeout=args.timeout,
+        debug=args.debug
     )
 
     # Handle Ctrl+C gracefully

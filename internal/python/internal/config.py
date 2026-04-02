@@ -47,6 +47,7 @@ class TCPConfig:
 
     LISTEN_BACKLOG = 5
     TIMEOUT_SEC = 1.0
+    CLIENT_WRITE_TIMEOUT_SEC = 0.5
 
 
 class ThreadConfig:

@@ -49,6 +49,7 @@ func Start(args []string) {
 	language := cfg.Language
 	fastMode := cfg.FastMode
 	enableTyping := cfg.EnableTyping
+	debugMode := false
 	tcpPort := ""
 	if cfg.TCPPort > 0 {
 		tcpPort = strconv.Itoa(cfg.TCPPort)
@@ -73,6 +74,8 @@ func Start(args []string) {
 			}
 		} else if arg == "--fast" {
 			fastMode = true
+		} else if arg == "--debug" {
+			debugMode = true
 		} else if arg == "--no-typing" {
 			enableTyping = false
 		} else if arg == "--gpu" || arg == "--cuda" {
@@ -104,10 +107,14 @@ func Start(args []string) {
 	if cfg.Timeout > 0 {
 		pythonArgs = append(pythonArgs, "--timeout", strconv.Itoa(cfg.Timeout))
 	}
+	if debugMode {
+		pythonArgs = append(pythonArgs, "--debug")
+	}
 
 	cmd := exec.Command(venvPython, pythonArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
+	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGTERM}
 
 	// Capture stderr to watch for state markers
 	stderr, err := cmd.StderrPipe()

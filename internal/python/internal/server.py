@@ -89,6 +89,7 @@ class StateServer:
             while self._running:
                 try:
                     client, _ = self._server_socket.accept()
+                    client.settimeout(TCPConfig.CLIENT_WRITE_TIMEOUT_SEC)
                     state_json = self._get_state_json()
                     response = state_json + "\n"
                     client.send(response.encode('utf-8'))

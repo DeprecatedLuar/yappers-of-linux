@@ -1,12 +1,12 @@
 # ~/.config/yappers-of-linux/config.toml
 
 notifications = "start,pause,stop" # Examples: "start,pause,stop" | "urgent" | "false"
-model = "tiny" # tiny/base/small/medium/large
+model = "base" # tiny/base/small/medium/large
 device = "cpu" # cpu/gpu
 language = "" # "auto"/"" for auto-detect
-fast_mode = false
+fast_mode = true
 enable_typing = true
-output_file = false # ~/.config/yappers-of-linux/output.txt
+output_file = true # ~/.config/yappers-of-linux/output.txt
 timeout = 30         # seconds of no output before auto-pause (0 = disabled)
 tcp_port = 12322     # TCP push server port (0 = disabled)
 
