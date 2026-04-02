@@ -21,7 +21,4 @@ func Stop() {
 	}
 
 	os.Remove(internal.GetPIDFile())
-
-	cfg := internal.LoadConfig()
-	internal.Notify("Yapping stopped", "stop", cfg)
 }

@@ -20,6 +20,4 @@ func Resume() {
 		os.Exit(1)
 	}
 
-	cfg := internal.LoadConfig()
-	internal.Notify("Yapping started", "start", cfg)
 }

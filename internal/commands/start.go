@@ -110,6 +110,9 @@ func Start(args []string) {
 	if debugMode {
 		pythonArgs = append(pythonArgs, "--debug")
 	}
+	if cfg.Notifications != "" {
+		pythonArgs = append(pythonArgs, "--notifications", cfg.Notifications)
+	}
 
 	cmd := exec.Command(venvPython, pythonArgs...)
 	cmd.Stdout = os.Stdout
@@ -149,13 +152,9 @@ func Start(args []string) {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigChan
-		// Send notification before cleanup
-		internal.Notify("Yapping stopped", "stop", cfg)
-		// Kill the Python process
 		if cmd.Process != nil {
 			cmd.Process.Kill()
 		}
-		// Cleanup
 		os.Remove(internal.GetPIDFile())
 		os.Exit(0)
 	}()
@@ -166,11 +165,7 @@ func Start(args []string) {
 		for scanner.Scan() {
 			line := scanner.Text()
 
-			// Watch for state markers
-			if strings.Contains(line, "SYSTEM_READY") {
-				internal.Notify("Yapping started", "start", cfg)
-			} else {
-				// Print other stderr output
+			if !strings.Contains(line, "SYSTEM_READY") {
 				fmt.Fprintln(os.Stderr, line)
 			}
 		}

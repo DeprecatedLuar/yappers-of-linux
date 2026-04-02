@@ -20,6 +20,4 @@ func Pause() {
 		os.Exit(1)
 	}
 
-	cfg := internal.LoadConfig()
-	internal.Notify("Yapping paused", "pause", cfg)
 }

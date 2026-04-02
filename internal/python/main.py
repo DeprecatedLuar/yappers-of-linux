@@ -69,6 +69,11 @@ def main():
         action='store_true',
         help='Enable debug logging (state transitions, signals, etc.)'
     )
+    parser.add_argument(
+        '--notifications',
+        default='',
+        help='Notification config string (e.g. "start,pause,stop,urgent")'
+    )
 
     args = parser.parse_args()
 
@@ -100,7 +105,8 @@ def main():
         enable_typing=not args.no_typing,
         output_file=args.output_file,
         timeout=args.timeout,
-        debug=args.debug
+        debug=args.debug,
+        notifications=args.notifications
     )
 
     # Handle Ctrl+C gracefully

@@ -12,6 +12,7 @@ Coordinates all components:
 
 import signal
 import subprocess
+import sys
 import threading
 import queue
 import time
@@ -25,7 +26,7 @@ from .server import StateServer
 class VoiceTyping:
     """Main voice typing engine."""
 
-    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False, enable_typing=True, output_file=False, timeout=0, debug=False):
+    def __init__(self, model_size="small", device="cpu", language="en", tcp_port=None, fast=False, enable_typing=True, output_file=False, timeout=0, debug=False, notifications=""):
         """
         Initialize voice typing engine.
 
@@ -47,6 +48,7 @@ class VoiceTyping:
         self.output_file = output_file
         self.timeout = timeout
         self.debug = debug
+        self._notif_events, self._notif_urgent = self._parse_notifications(notifications)
         self._last_output_time = time.time()
 
         # State management
@@ -77,8 +79,8 @@ class VoiceTyping:
         # Initial state
         self.state = "ready"
         # Signal to Go that system is ready (via stderr to not interfere with stdout display)
-        import sys
         print("SYSTEM_READY", file=sys.stderr, flush=True)
+        self._notify("start", "Yapping started")
 
         if self.timeout > 0:
             self._start_timeout_watcher()
@@ -165,6 +167,29 @@ class VoiceTyping:
         t = threading.Thread(target=watcher, daemon=True)
         t.start()
 
+    @staticmethod
+    def _parse_notifications(notif_str):
+        """Parse notifications config string into (events, urgent) tuple."""
+        notif_str = notif_str.strip()
+        if not notif_str or notif_str in ("false", "disabled"):
+            return [], False
+        parts = [p.strip() for p in notif_str.split(",")]
+        urgent = "urgent" in parts
+        events = [p for p in parts if p in ("start", "pause", "stop")]
+        if not events and urgent:
+            events = ["start"]
+        return events, urgent
+
+    def _notify(self, event, message):
+        """Send desktop notification if event is configured."""
+        if event not in self._notif_events:
+            return
+        urgency = "critical" if self._notif_urgent else "normal"
+        subprocess.Popen(
+            ["notify-send", "-i", "audio-input-microphone", "-u", urgency, "Yap", message],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+
     def toggle_listening(self, _signum=None, _frame=None):
         """Toggle pause/resume (SIGHUP handler)."""
         if self.paused:
@@ -182,6 +207,7 @@ class VoiceTyping:
             self.paused = True
             self.capture.pause_capture()
             self.state = "paused"
+            self._notify("pause", "Yapping paused")
 
     def resume_listening(self, _signum=None, _frame=None):
         """Resume listening (SIGUSR2 handler)."""
@@ -198,10 +224,12 @@ class VoiceTyping:
 
             self._last_output_time = time.time()
             self.state = "ready"
+            self._notify("start", "Yapping started")
 
     def run(self):
         """Main event loop."""
         # Register signal handlers
+        signal.signal(signal.SIGTERM, lambda _s, _f: self.cleanup() or sys.exit(0))
         signal.signal(signal.SIGHUP, self.toggle_listening)
         signal.signal(signal.SIGUSR1, self.pause_listening)
         signal.signal(signal.SIGUSR2, self.resume_listening)
@@ -269,6 +297,7 @@ class VoiceTyping:
 
     def cleanup(self):
         """Clean up resources."""
+        self._notify("stop", "Yapping stopped")
         self.output.clear_status_line()
         self.running = False
         time.sleep(0.1)  # Let threads finish
